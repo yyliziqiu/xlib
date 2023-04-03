@@ -12,28 +12,55 @@ import (
 	"github.com/yyliziqiu/xlib/xlog"
 )
 
-func Exec2(config Config, cpath string, register func()) (err error) {
-	err = InitSystem(config, cpath)
+type App struct {
+	// app 名称
+	Name string
+
+	// app 版本
+	Version string
+
+	// 配置文件路径
+	ConfigPath string
+
+	// 日志目录路径。如果不为空，将覆盖配置文件中的日志路径
+	LogPath string
+
+	// 应用关闭等待时间
+	ExitDuration time.Duration
+
+	// 全局配置
+	Config Config
+
+	// 应用模块
+	Modules func() []Module
+}
+
+func (app *App) Exec() (err error) {
+	err = app.Init()
 	if err != nil {
 		return err
 	}
-	return Exec(config, register)
+	return app.Boot()
 }
 
-func InitSystem(config Config, cpath string) (err error) {
-	err = xconfig.Init(cpath, config)
+func (app *App) Init() (err error) {
+	err = xconfig.Init(app.ConfigPath, app.Config)
 	if err != nil {
 		return fmt.Errorf("init config error [%v]", err)
 	}
 
-	config.Default()
-
-	err = config.Check()
+	err = app.Config.Check()
 	if err != nil {
 		return err
 	}
 
-	err = xlog.Init(config.GetLog())
+	app.Config.Default()
+
+	logC := app.Config.GetLog()
+	if app.LogPath != "" {
+		logC.Path = app.LogPath
+	}
+	err = xlog.Init(logC)
 	if err != nil {
 		return fmt.Errorf("init log error [%v]", err)
 	}
@@ -41,8 +68,11 @@ func InitSystem(config Config, cpath string) (err error) {
 	return nil
 }
 
-func Exec(config Config, register func()) (err error) {
-	register()
+func (app *App) Boot() (err error) {
+	modules := app.Modules()
+	if len(modules) > 0 {
+		RegisterModule(modules...)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -64,8 +94,8 @@ func Exec(config Config, register func()) (err error) {
 
 	cancel()
 
-	if config.GetWaitTime() > 0 {
-		time.Sleep(config.GetWaitTime())
+	if app.ExitDuration > 0 {
+		time.Sleep(app.ExitDuration)
 	}
 
 	xlog.Info("App exit.")

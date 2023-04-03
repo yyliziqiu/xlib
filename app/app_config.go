@@ -2,7 +2,6 @@ package app
 
 import (
 	"path/filepath"
-	"time"
 
 	"github.com/yyliziqiu/xlib/xdb"
 	"github.com/yyliziqiu/xlib/xelastic"
@@ -14,9 +13,13 @@ import (
 )
 
 type Config interface {
-	Default()
+	// Check 检查配置是否正确
 	Check() error
-	GetWaitTime() time.Duration
+
+	// Default 为配置项设置默认值
+	Default()
+
+	// GetLog 获取日志配置
 	GetLog() xlog.Config
 }
 
@@ -26,7 +29,6 @@ type BaseConfig struct {
 	SvcId    string
 	BasePath string
 	DataPath string
-	WaitTime time.Duration
 
 	Log     xlog.Config
 	Web     xweb.Config
@@ -39,6 +41,10 @@ type BaseConfig struct {
 		EnableTables  bool
 		EnableRecords bool
 	}
+}
+
+func (c *BaseConfig) Check() error {
+	return nil
 }
 
 func (c *BaseConfig) Default() {
@@ -57,14 +63,6 @@ func (c *BaseConfig) Default() {
 	if c.DataPath == "" {
 		c.DataPath = filepath.Join(c.BasePath, "data")
 	}
-}
-
-func (c *BaseConfig) Check() error {
-	return nil
-}
-
-func (c *BaseConfig) GetWaitTime() time.Duration {
-	return c.WaitTime
 }
 
 func (c *BaseConfig) GetLog() xlog.Config {
