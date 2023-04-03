@@ -10,11 +10,11 @@ import (
 
 var _rootCmd *cobra.Command
 
-func ExecCmd(app App, cmds ...*cobra.Command) {
+func ExecCmd(app *App, cmds ...func() *cobra.Command) {
 	initRootCmd(app)
 
 	for _, cmd := range cmds {
-		_rootCmd.AddCommand(cmd)
+		_rootCmd.AddCommand(cmd())
 	}
 
 	err := _rootCmd.Execute()
@@ -24,7 +24,7 @@ func ExecCmd(app App, cmds ...*cobra.Command) {
 	}
 }
 
-func initRootCmd(app App) {
+func initRootCmd(app *App) {
 	var (
 		config = new(string)
 		logdir = new(string)
