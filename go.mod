@@ -1,0 +1,27 @@
+module github.com/yyliziqiu/xlib
+
+go 1.16
+
+require (
+	github.com/aliyun/aliyun-oss-go-sdk v2.2.9+incompatible
+	github.com/confluentinc/confluent-kafka-go v1.9.2
+	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
+	github.com/gin-gonic/gin v1.9.1
+	github.com/go-redis/redis/v8 v8.11.5
+	github.com/go-sql-driver/mysql v1.7.1
+	github.com/jehiah/go-strftime v0.0.0-20171201141054-1d33003b3869 // indirect
+	github.com/jinzhu/gorm v1.9.16
+	github.com/jonboulle/clockwork v0.4.0 // indirect
+	github.com/lestrrat/go-envload v0.0.0-20180220120943-6ed08b54a570 // indirect
+	github.com/lestrrat/go-file-rotatelogs v0.0.0-20180223000712-d3151e2a480f
+	github.com/lestrrat/go-strftime v0.0.0-20180220042222-ba3bf9c1d042 // indirect
+	github.com/lib/pq v1.10.9
+	github.com/olivere/elastic/v7 v7.0.32
+	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
+	github.com/sirupsen/logrus v1.9.3
+	github.com/spf13/viper v1.16.0
+	github.com/tebeka/strftime v0.1.5 // indirect
+	gorm.io/driver/mysql v1.5.1
+	gorm.io/driver/postgres v1.5.2
+	gorm.io/gorm v1.25.4
+)
