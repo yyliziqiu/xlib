@@ -1,6 +1,7 @@
 package xkafka
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -32,6 +33,18 @@ func NewProducer(config Config) (*kafka.Producer, error) {
 	}
 
 	return producer, nil
+}
+
+func SendObject(producer *kafka.Producer, topic string, object interface{}) error {
+	message, err := json.Marshal(object)
+	if err != nil {
+		return err
+	}
+
+	return producer.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          message,
+	}, nil)
 }
 
 func SendMessage(producer *kafka.Producer, topic string, message []byte) error {
