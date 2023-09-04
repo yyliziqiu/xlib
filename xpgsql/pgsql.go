@@ -10,7 +10,7 @@ import (
 
 var dbs map[string]*sql.DB
 
-func Initialize(configs ...Config) error {
+func Init(configs ...Config) error {
 	dbs = make(map[string]*sql.DB, len(configs))
 	for _, config := range configs {
 		db, err := New(config)

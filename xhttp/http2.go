@@ -22,7 +22,7 @@ func SetMaxLength(n int) {
 	maxLength = n
 }
 
-func Get2(url string, header http.Header, query url.Values, out interface{}) error {
+func GetAndLog(url string, header http.Header, query url.Values, out interface{}) error {
 	timer := xutil.NewTimer()
 
 	err := Get(url, header, query, out)
@@ -37,7 +37,7 @@ func Get2(url string, header http.Header, query url.Values, out interface{}) err
 	return nil
 }
 
-func PostForm2(url string, header http.Header, in url.Values, out interface{}) error {
+func PostFormAndLog(url string, header http.Header, in url.Values, out interface{}) error {
 	timer := xutil.NewTimer()
 
 	err := PostForm(url, header, in, out)
@@ -52,7 +52,7 @@ func PostForm2(url string, header http.Header, in url.Values, out interface{}) e
 	return nil
 }
 
-func PostJSON2(url string, header http.Header, in interface{}, out interface{}) error {
+func PostJSONAndLog(url string, header http.Header, in interface{}, out interface{}) error {
 	timer := xutil.NewTimer()
 
 	err := PostJSON(url, header, in, out)

@@ -12,13 +12,13 @@ var (
 	producers map[string]*kafka.Producer
 )
 
-func Initialize(requireNew bool, configs ...Config) error {
+func Init(autoNew bool, configs ...Config) error {
 	cs = make(map[string]Config)
 	for _, config := range configs {
 		cs[config.Id] = config
 	}
 
-	if !requireNew {
+	if !autoNew {
 		return nil
 	}
 

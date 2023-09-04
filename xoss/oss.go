@@ -34,7 +34,7 @@ type BucketConfig struct {
 	Prefix string `json:"prefix"`
 }
 
-func Initialize(configs ...Config) error {
+func Init(configs ...Config) error {
 	clients = make(map[string]*oss.Client, len(configs))
 	for _, config := range configs {
 		db, err := New(config)

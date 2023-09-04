@@ -11,7 +11,7 @@ var (
 	clusters map[string]*redis.ClusterClient
 )
 
-func Initialize(configs ...Config) error {
+func Init(configs ...Config) error {
 	clients = make(map[string]*redis.Client, len(configs))
 	clusters = make(map[string]*redis.ClusterClient, len(configs))
 	for _, config := range configs {

@@ -19,7 +19,7 @@ func SetGlobalLogger(logger *logrus.Logger) {
 
 var dbs map[string]*gorm.DB
 
-func Initialize(configs ...Config) error {
+func Init(configs ...Config) error {
 	dbs = make(map[string]*gorm.DB, len(configs))
 	for _, config := range configs {
 		db, err := New(config)

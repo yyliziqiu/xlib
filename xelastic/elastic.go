@@ -16,7 +16,7 @@ func SetGlobalLogger(logger *logrus.Logger) {
 
 var clients map[string]*elastic.Client
 
-func Initialize(configs ...Config) error {
+func Init(configs ...Config) error {
 	clients = make(map[string]*elastic.Client)
 	for _, config := range configs {
 		client, err := NewClient(config)

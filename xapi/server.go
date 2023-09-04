@@ -27,9 +27,9 @@ func (c Config) WithDefault() Config {
 	return c
 }
 
-type SetRoutes func(engine *gin.Engine)
+type RoutesFunc func(engine *gin.Engine)
 
-func RunServer(config Config, routes ...SetRoutes) error {
+func Run(config Config, routes ...RoutesFunc) error {
 	config = config.WithDefault()
 
 	gin.SetMode(gin.ReleaseMode)

@@ -22,7 +22,7 @@ var (
 	Http *logrus.Logger
 )
 
-func Initialize(c Config) error {
+func Init(c Config) error {
 	var err error
 
 	config = c.WithDefault()
