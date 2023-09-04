@@ -49,6 +49,10 @@ func (t Timer) Stops() string {
 	return t.manualDuration(t.Stop())
 }
 
+func (t Timer) String() string {
+	return t.Stops()
+}
+
 func Timestamp2String(ts int64) string {
 	return time.Unix(ts, 0).Format("2006-01-02 15:04:05")
 }

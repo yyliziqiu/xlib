@@ -8,12 +8,28 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/sirupsen/logrus"
+
+	"github.com/yyliziqiu/xlib/xutil"
 )
 
-var client *http.Client
+var (
+	client       *http.Client
+	logger       *logrus.Logger
+	logMaxLength = 2000
+)
 
 func SetClient(c *http.Client) {
 	client = c
+}
+
+func SetLogger(lg *logrus.Logger) {
+	logger = lg
+}
+
+func SetLogMaxLength(n int) {
+	logMaxLength = n
 }
 
 func Get(rawURL string, header http.Header, query url.Values, out interface{}) error {
@@ -36,14 +52,14 @@ func Get(rawURL string, header http.Header, query url.Values, out interface{}) e
 	}
 
 	// 发送请求
-	res, err := getClient().Do(req)
+	res, cost, err := doRequest(req)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
 
 	// 解析并返回响应结果
-	return handleResponse(res, out)
+	return handleResponse(res, out, req, []byte{}, cost)
 }
 
 func newRequest(method string, url string, header http.Header, body io.Reader) (*http.Request, error) {
@@ -59,31 +75,70 @@ func newRequest(method string, url string, header http.Header, body io.Reader) (
 	return req, nil
 }
 
-func getClient() *http.Client {
-	if client != nil {
-		return client
+func doRequest(req *http.Request) (*http.Response, string, error) {
+	if client == nil {
+		client = http.DefaultClient
 	}
-	return http.DefaultClient
+
+	timer := xutil.NewTimer()
+
+	res, err := client.Do(req)
+	if err != nil {
+		logError(req, timer.Stops(), err)
+	}
+
+	return res, timer.Stops(), err
 }
 
-func handleResponse(res *http.Response, out interface{}) error {
+func logError(req *http.Request, cost string, err error) {
+	if logger == nil {
+		return
+	}
+	logger.Warnf("url: %s, cost: %s, error: %v.", req.URL, cost, err)
+}
+
+func handleResponse(res *http.Response, out interface{}, req *http.Request, inbs []byte, cost string) (err error) {
 	outbs, err := io.ReadAll(res.Body)
+
+	defer func() {
+		logInfo(req, inbs, res, outbs, cost, err)
+	}()
+
 	if err != nil {
 		return fmt.Errorf("read response failed, %v", err)
 	}
+
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("response error, status code: %d, content: %s", res.StatusCode, string(outbs))
 	}
+
 	if !strings.Contains(strings.ToLower(res.Header.Get("Content-Type")), "application/json") {
 		return fmt.Errorf("content type error, content type: %s, content: %s", res.Header.Get("Content-Type"), string(outbs))
 	}
+
 	if out != nil {
 		err = json.Unmarshal(outbs, out)
 		if err != nil {
 			return fmt.Errorf("json unmarshal failed, %v", err)
 		}
 	}
+
 	return nil
+}
+
+func logInfo(req *http.Request, inbs []byte, res *http.Response, outbs []byte, cost string, err error) {
+	if logger == nil {
+		return
+	}
+	logger.Infof("url: %s, header: %v, request: %s, status code: %d, response: %s, cost:%s ,error: %v.",
+		req.URL, req.Header, truncate(string(inbs)), res.StatusCode, truncate(string(outbs)), cost, err)
+}
+
+func truncate(s string) string {
+	if len(s) <= logMaxLength {
+		return s
+	}
+	return s[:logMaxLength]
 }
 
 func PostForm(url string, header http.Header, in url.Values, out interface{}) error {
@@ -97,14 +152,14 @@ func PostForm(url string, header http.Header, in url.Values, out interface{}) er
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// 发送请求
-	res, err := getClient().Do(req)
+	res, cost, err := doRequest(req)
 	if err != nil {
-		return fmt.Errorf("do request failed, %v", err)
+		return err
 	}
 	defer res.Body.Close()
 
 	// 解析并返回响应结果
-	return handleResponse(res, out)
+	return handleResponse(res, out, req, []byte(in.Encode()), cost)
 }
 
 type emptyJSON struct{}
@@ -114,13 +169,13 @@ func PostJSON(url string, header http.Header, in interface{}, out interface{}) e
 	if in == nil {
 		in = emptyJSON{}
 	}
-	inBytes, err := json.Marshal(in)
+	inbs, err := json.Marshal(in)
 	if err != nil {
 		return fmt.Errorf("marshal http request failed, %v", err)
 	}
 
 	// 创建请求
-	req, err := newRequest(http.MethodPost, url, header, bytes.NewReader(inBytes))
+	req, err := newRequest(http.MethodPost, url, header, bytes.NewReader(inbs))
 	if err != nil {
 		return err
 	}
@@ -129,12 +184,12 @@ func PostJSON(url string, header http.Header, in interface{}, out interface{}) e
 	req.Header.Set("Content-Type", "application/json")
 
 	// 发送请求
-	res, err := getClient().Do(req)
+	res, cost, err := doRequest(req)
 	if err != nil {
-		return fmt.Errorf("do request failed, %v", err)
+		return err
 	}
 	defer res.Body.Close()
 
 	// 解析并返回响应结果
-	return handleResponse(res, out)
+	return handleResponse(res, out, req, inbs, cost)
 }
