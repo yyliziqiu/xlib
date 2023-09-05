@@ -19,7 +19,7 @@ func (c Config) WithDefault() Config {
 		c.Level = "debug"
 	}
 	if c.MaxAge == 0 {
-		c.MaxAge = 15 * 24 * time.Hour
+		c.MaxAge = 5 * 24 * time.Hour
 	}
 	if c.RotateTime == 0 {
 		c.RotateTime = 24 * time.Hour

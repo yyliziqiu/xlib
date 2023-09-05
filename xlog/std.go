@@ -9,12 +9,12 @@ import (
 
 // WithError creates an entry from the standard logger and adds an error to it, using the value defined in ErrorKey as key.
 func WithError(err error) *logrus.Entry {
-	return std.WithField(logrus.ErrorKey, err)
+	return Std.WithField(logrus.ErrorKey, err)
 }
 
 // WithContext creates an entry from the standard logger and adds a context to it.
 func WithContext(ctx context.Context) *logrus.Entry {
-	return std.WithContext(ctx)
+	return Std.WithContext(ctx)
 }
 
 // WithField creates an entry from the standard logger and adds a field to
@@ -23,7 +23,7 @@ func WithContext(ctx context.Context) *logrus.Entry {
 // Note that it doesn't log until you call Debug, Print, Info, Warn, Fatal
 // or Panic on the Entry it returns.
 func WithField(key string, value interface{}) *logrus.Entry {
-	return std.WithField(key, value)
+	return Std.WithField(key, value)
 }
 
 // WithFields creates an entry from the standard logger and adds multiple
@@ -33,7 +33,7 @@ func WithField(key string, value interface{}) *logrus.Entry {
 // Note that it doesn't log until you call Debug, Print, Info, Warn, Fatal
 // or Panic on the Entry it returns.
 func WithFields(fields logrus.Fields) *logrus.Entry {
-	return std.WithFields(fields)
+	return Std.WithFields(fields)
 }
 
 // WithTime creates an entry from the standard logger and overrides the time of
@@ -42,185 +42,185 @@ func WithFields(fields logrus.Fields) *logrus.Entry {
 // Note that it doesn't log until you call Debug, Print, Info, Warn, Fatal
 // or Panic on the Entry it returns.
 func WithTime(t time.Time) *logrus.Entry {
-	return std.WithTime(t)
+	return Std.WithTime(t)
 }
 
 // Trace logs a message at level Trace on the standard logger.
 func Trace(args ...interface{}) {
-	std.Trace(args...)
+	Std.Trace(args...)
 }
 
 // Debug logs a message at level Debug on the standard logger.
 func Debug(args ...interface{}) {
-	std.Debug(args...)
+	Std.Debug(args...)
 }
 
 // Print logs a message at level Info on the standard logger.
 func Print(args ...interface{}) {
-	std.Print(args...)
+	Std.Print(args...)
 }
 
 // Info logs a message at level Info on the standard logger.
 func Info(args ...interface{}) {
-	std.Info(args...)
+	Std.Info(args...)
 }
 
 // Warn logs a message at level Warn on the standard logger.
 func Warn(args ...interface{}) {
-	std.Warn(args...)
+	Std.Warn(args...)
 }
 
 // Warning logs a message at level Warn on the standard logger.
 func Warning(args ...interface{}) {
-	std.Warning(args...)
+	Std.Warning(args...)
 }
 
 // Error logs a message at level Error on the standard logger.
 func Error(args ...interface{}) {
-	std.Error(args...)
+	Std.Error(args...)
 }
 
 // Panic logs a message at level Panic on the standard logger.
 func Panic(args ...interface{}) {
-	std.Panic(args...)
+	Std.Panic(args...)
 }
 
 // Fatal logs a message at level Fatal on the standard logger then the process will exit with status set to 1.
 func Fatal(args ...interface{}) {
-	std.Fatal(args...)
+	Std.Fatal(args...)
 }
 
 // TraceFn logs a message from a func at level Trace on the standard logger.
 func TraceFn(fn logrus.LogFunction) {
-	std.TraceFn(fn)
+	Std.TraceFn(fn)
 }
 
 // DebugFn logs a message from a func at level Debug on the standard logger.
 func DebugFn(fn logrus.LogFunction) {
-	std.DebugFn(fn)
+	Std.DebugFn(fn)
 }
 
 // PrintFn logs a message from a func at level Info on the standard logger.
 func PrintFn(fn logrus.LogFunction) {
-	std.PrintFn(fn)
+	Std.PrintFn(fn)
 }
 
 // InfoFn logs a message from a func at level Info on the standard logger.
 func InfoFn(fn logrus.LogFunction) {
-	std.InfoFn(fn)
+	Std.InfoFn(fn)
 }
 
 // WarnFn logs a message from a func at level Warn on the standard logger.
 func WarnFn(fn logrus.LogFunction) {
-	std.WarnFn(fn)
+	Std.WarnFn(fn)
 }
 
 // WarningFn logs a message from a func at level Warn on the standard logger.
 func WarningFn(fn logrus.LogFunction) {
-	std.WarningFn(fn)
+	Std.WarningFn(fn)
 }
 
 // ErrorFn logs a message from a func at level Error on the standard logger.
 func ErrorFn(fn logrus.LogFunction) {
-	std.ErrorFn(fn)
+	Std.ErrorFn(fn)
 }
 
 // PanicFn logs a message from a func at level Panic on the standard logger.
 func PanicFn(fn logrus.LogFunction) {
-	std.PanicFn(fn)
+	Std.PanicFn(fn)
 }
 
 // FatalFn logs a message from a func at level Fatal on the standard logger then the process will exit with status set to 1.
 func FatalFn(fn logrus.LogFunction) {
-	std.FatalFn(fn)
+	Std.FatalFn(fn)
 }
 
 // Tracef logs a message at level Trace on the standard logger.
 func Tracef(format string, args ...interface{}) {
-	std.Tracef(format, args...)
+	Std.Tracef(format, args...)
 }
 
 // Debugf logs a message at level Debug on the standard logger.
 func Debugf(format string, args ...interface{}) {
-	std.Debugf(format, args...)
+	Std.Debugf(format, args...)
 }
 
 // Printf logs a message at level Info on the standard logger.
 func Printf(format string, args ...interface{}) {
-	std.Printf(format, args...)
+	Std.Printf(format, args...)
 }
 
 // Infof logs a message at level Info on the standard logger.
 func Infof(format string, args ...interface{}) {
-	std.Infof(format, args...)
+	Std.Infof(format, args...)
 }
 
 // Warnf logs a message at level Warn on the standard logger.
 func Warnf(format string, args ...interface{}) {
-	std.Warnf(format, args...)
+	Std.Warnf(format, args...)
 }
 
 // Warningf logs a message at level Warn on the standard logger.
 func Warningf(format string, args ...interface{}) {
-	std.Warningf(format, args...)
+	Std.Warningf(format, args...)
 }
 
 // Errorf logs a message at level Error on the standard logger.
 func Errorf(format string, args ...interface{}) {
-	std.Errorf(format, args...)
+	Std.Errorf(format, args...)
 }
 
 // Panicf logs a message at level Panic on the standard logger.
 func Panicf(format string, args ...interface{}) {
-	std.Panicf(format, args...)
+	Std.Panicf(format, args...)
 }
 
 // Fatalf logs a message at level Fatal on the standard logger then the process will exit with status set to 1.
 func Fatalf(format string, args ...interface{}) {
-	std.Fatalf(format, args...)
+	Std.Fatalf(format, args...)
 }
 
 // Traceln logs a message at level Trace on the standard logger.
 func Traceln(args ...interface{}) {
-	std.Traceln(args...)
+	Std.Traceln(args...)
 }
 
 // Debugln logs a message at level Debug on the standard logger.
 func Debugln(args ...interface{}) {
-	std.Debugln(args...)
+	Std.Debugln(args...)
 }
 
 // Println logs a message at level Info on the standard logger.
 func Println(args ...interface{}) {
-	std.Println(args...)
+	Std.Println(args...)
 }
 
 // Infoln logs a message at level Info on the standard logger.
 func Infoln(args ...interface{}) {
-	std.Infoln(args...)
+	Std.Infoln(args...)
 }
 
 // Warnln logs a message at level Warn on the standard logger.
 func Warnln(args ...interface{}) {
-	std.Warnln(args...)
+	Std.Warnln(args...)
 }
 
 // Warningln logs a message at level Warn on the standard logger.
 func Warningln(args ...interface{}) {
-	std.Warningln(args...)
+	Std.Warningln(args...)
 }
 
 // Errorln logs a message at level Error on the standard logger.
 func Errorln(args ...interface{}) {
-	std.Errorln(args...)
+	Std.Errorln(args...)
 }
 
 // Panicln logs a message at level Panic on the standard logger.
 func Panicln(args ...interface{}) {
-	std.Panicln(args...)
+	Std.Panicln(args...)
 }
 
 // Fatalln logs a message at level Fatal on the standard logger then the process will exit with status set to 1.
 func Fatalln(args ...interface{}) {
-	std.Fatalln(args...)
+	Std.Fatalln(args...)
 }

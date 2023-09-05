@@ -17,9 +17,11 @@ import (
 var (
 	config Config
 
-	std *logrus.Logger
+	Std *logrus.Logger
 
-	Http *logrus.Logger
+	HTTP *logrus.Logger
+
+	Console *logrus.Logger
 )
 
 func Init(c Config) error {
@@ -27,12 +29,17 @@ func Init(c Config) error {
 
 	config = c.WithDefault()
 
-	std, err = NewLogger(config.Name)
+	Std, err = NewLogger(config.Name)
 	if err != nil {
 		return err
 	}
 
-	Http, err = NewLogger("http-")
+	HTTP, err = NewLogger("http-")
+	if err != nil {
+		return err
+	}
+
+	Console, err = NewConsoleLogger("debug")
 	if err != nil {
 		return err
 	}
@@ -42,16 +49,16 @@ func Init(c Config) error {
 
 func NewLogger(prefix string) (*logrus.Logger, error) {
 	if config.Console {
-		return newConsoleLogger()
+		return NewConsoleLogger(config.Level)
 	}
-	return newFileLogger(prefix)
+	return NewFileLogger(prefix, config)
 }
 
-func newConsoleLogger() (*logrus.Logger, error) {
+func NewConsoleLogger(levelStr string) (*logrus.Logger, error) {
 	logger := logrus.New()
 
 	// 设置日志等级
-	level, err := logrus.ParseLevel(config.Level)
+	level, err := logrus.ParseLevel(levelStr)
 	if err != nil {
 		return nil, fmt.Errorf("can't parse level, error [%v]", err)
 	}
@@ -67,11 +74,11 @@ func newConsoleLogger() (*logrus.Logger, error) {
 	return logger, nil
 }
 
-func newFileLogger(prefix string) (*logrus.Logger, error) {
+func NewFileLogger(prefix string, c Config) (*logrus.Logger, error) {
 	logger := logrus.New()
 
 	// 设置日志等级
-	level, err := logrus.ParseLevel(config.Level)
+	level, err := logrus.ParseLevel(c.Level)
 	if err != nil {
 		return nil, fmt.Errorf("can't parse level, error [%v]", err)
 	}
@@ -81,7 +88,7 @@ func newFileLogger(prefix string) (*logrus.Logger, error) {
 	logger.SetOutput(io.Discard)
 
 	// 日志按天分割
-	hook, err := newRotateHook(config.Path, prefix, config.MaxAge, config.RotateTime)
+	hook, err := newRotateHook(prefix, c.Path, c.MaxAge, c.RotateTime)
 	if err != nil {
 		return nil, fmt.Errorf("create hook error [%v]", err)
 	}
@@ -93,7 +100,7 @@ func newFileLogger(prefix string) (*logrus.Logger, error) {
 	return logger, nil
 }
 
-func newRotateHook(dirPath string, prefix string, maxAge time.Duration, rotateTime time.Duration) (*lfshook.LfsHook, error) {
+func newRotateHook(prefix string, dirPath string, maxAge time.Duration, rotateTime time.Duration) (*lfshook.LfsHook, error) {
 	err := xutil.MkdirIfNotExist(dirPath)
 	if err != nil {
 		return nil, fmt.Errorf("create log dir error [%v]", err)
@@ -136,11 +143,7 @@ func newRotate(dirPath string, filename string, maxAge time.Duration, rotateTime
 func NewLoggerMust(prefix string) *logrus.Logger {
 	logger, err := NewLogger(prefix)
 	if err != nil {
-		return std
+		return Std
 	}
 	return logger
-}
-
-func GetDefaultLogger() *logrus.Logger {
-	return std
 }
