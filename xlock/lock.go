@@ -1,70 +1,43 @@
 package xlock
 
 import (
-	"sync"
 	"time"
 )
 
-type locker struct {
+type Locker interface {
+	Lock(key string) bool
+	Unlock(key string)
+	OwnerLock(owner string, key string) bool
+	OwnerUnlock(owner string, key string) bool
+}
+
+type metadata struct {
 	owner     string
 	timestamp int64
-}
-
-var (
-	lockers   = make(map[string]locker)
-	lockersMu = sync.Mutex{}
-
-	timeout int64 = 3600
-)
-
-// SetTimeout 设置锁超时时间，单位：秒
-func SetTimeout(d int64) {
-	timeout = d
-}
-
-func Lock(key string) bool {
-	return OwnerLock("", key)
-}
-
-func Unlock(key string) {
-	OwnerUnlock("", key)
-}
-
-func OwnerLock(owner string, key string) bool {
-	lockersMu.Lock()
-	defer lockersMu.Unlock()
-
-	lk, ok := lockers[key]
-	if ok || now()-lk.timestamp < timeout {
-		return false
-	}
-
-	lockers[key] = locker{
-		owner:     owner,
-		timestamp: now(),
-	}
-
-	return true
 }
 
 func now() int64 {
 	return time.Now().Unix()
 }
 
+var defaultLocker Locker = NewSyncLocker()
+
+func SetDefaultLocker(locker Locker) {
+	defaultLocker = locker
+}
+
+func Lock(key string) bool {
+	return defaultLocker.Lock(key)
+}
+
+func Unlock(key string) {
+	defaultLocker.Unlock(key)
+}
+
+func OwnerLock(owner string, key string) bool {
+	return defaultLocker.OwnerLock(owner, key)
+}
+
 func OwnerUnlock(owner string, key string) bool {
-	lockersMu.Lock()
-	defer lockersMu.Unlock()
-
-	lk, ok := lockers[key]
-	if !ok {
-		return true
-	}
-
-	if lk.owner != owner {
-		return false
-	}
-
-	delete(lockers, key)
-
-	return true
+	return defaultLocker.OwnerUnlock(owner, key)
 }
