@@ -17,6 +17,14 @@ type Timer struct {
 	pause time.Time
 }
 
+func (t Timer) StartedAt() time.Time {
+	return t.start
+}
+
+func (t Timer) PausedAt() time.Time {
+	return t.pause
+}
+
 func (t Timer) Pause() time.Duration {
 	d := time.Now().Sub(t.pause)
 	t.pause = time.Now()
