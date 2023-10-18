@@ -28,6 +28,9 @@ func (c Config) WithDefault() Config {
 	if c.Id == "" {
 		c.Id = DefaultId
 	}
+	if c.Type == "" {
+		c.Type = DBTypeMySQL
+	}
 	if c.MaxOpenConns == 0 {
 		c.MaxOpenConns = 50
 	}
