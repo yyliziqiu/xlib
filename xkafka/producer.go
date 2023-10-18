@@ -35,21 +35,18 @@ func NewProducer(config Config) (*kafka.Producer, error) {
 	return producer, nil
 }
 
-func ProduceObject(producer *kafka.Producer, topic string, object interface{}) error {
-	message, err := json.Marshal(object)
-	if err != nil {
-		return err
-	}
-
+func ProduceMessage(producer *kafka.Producer, topic string, message []byte) error {
 	return producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Value:          message,
 	}, nil)
 }
 
-func ProduceMessage(producer *kafka.Producer, topic string, message []byte) error {
-	return producer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Value:          message,
-	}, nil)
+func ProduceObject(producer *kafka.Producer, topic string, object interface{}) error {
+	message, err := json.Marshal(object)
+	if err != nil {
+		return err
+	}
+
+	return ProduceMessage(producer, topic, message)
 }

@@ -74,7 +74,7 @@ func (c Config) GORMConfig() *gorm.Config {
 	if globalLogger != nil {
 		lg = globalLogger
 	} else {
-		lg = xlog.NewLoggerMust(c.LogName)
+		lg = xlog.MustNewLoggerByName(c.LogName)
 	}
 
 	return &gorm.Config{Logger: logger.New(lg, logger.Config{

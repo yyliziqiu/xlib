@@ -50,7 +50,7 @@ var logger *logrus.Logger
 
 func setLogger(config Config) {
 	if !config.LogDisabled && logger == nil {
-		logger = xlog.NewLoggerMust(config.LogName)
+		logger = xlog.MustNewLoggerByName(config.LogName)
 	}
 
 	var writer io.Writer

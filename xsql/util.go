@@ -13,7 +13,7 @@ func IsNoRowsError(err error) bool {
 	return err == sql.ErrNoRows
 }
 
-func IsDuplicateKeyErrorMySQL(err error) bool {
+func IsMySQLDuplicateKeyError(err error) bool {
 	err2, ok := err.(*mysql.MySQLError)
 	if !ok {
 		return false
@@ -21,7 +21,7 @@ func IsDuplicateKeyErrorMySQL(err error) bool {
 	return err2.Number == 1062
 }
 
-func IsDuplicateKeyErrorPostgres(err error) bool {
+func IsPostgresDuplicateKeyError(err error) bool {
 	err2, ok := err.(*pq.Error)
 	if !ok {
 		return false
@@ -29,7 +29,7 @@ func IsDuplicateKeyErrorPostgres(err error) bool {
 	return err2.Code == "23505"
 }
 
-func JoinValueInt(items []int) string {
+func JoinIntValue(items []int) string {
 	length := len(items)
 	if length == 0 {
 		return ""
@@ -43,7 +43,7 @@ func JoinValueInt(items []int) string {
 	return sb.String()
 }
 
-func JoinValueString(items []string) string {
+func JoinStringValue(items []string) string {
 	length := len(items)
 	if length == 0 {
 		return ""
@@ -51,12 +51,12 @@ func JoinValueString(items []string) string {
 	return "'" + strings.Join(items, "', '") + "'"
 }
 
-func JoinValueStingWithSlashes(items []string) string {
+func JoinStingValueWithSlashes(items []string) string {
 	length := len(items)
 	for i := 0; i < length; i++ {
 		items[i] = AddSlashes(items[i])
 	}
-	return JoinValueString(items)
+	return JoinStringValue(items)
 }
 
 func AddSlashes(str string) string {

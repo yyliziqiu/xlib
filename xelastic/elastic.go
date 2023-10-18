@@ -37,7 +37,7 @@ func NewClient(config Config) (*elastic.Client, error) {
 		if globalLogger != nil {
 			logger = globalLogger
 		} else {
-			logger = xlog.NewLoggerMust(config.LogName)
+			logger = xlog.MustNewLoggerByName(config.LogName)
 		}
 	}
 

@@ -17,7 +17,7 @@ import (
 var (
 	client       *http.Client
 	logger       *logrus.Logger
-	logMaxLength = 2000
+	maxLogLength = 1200
 )
 
 func SetClient(c *http.Client) {
@@ -28,8 +28,8 @@ func SetLogger(lg *logrus.Logger) {
 	logger = lg
 }
 
-func SetLogMaxLength(n int) {
-	logMaxLength = n
+func SetMaxLogLength(n int) {
+	maxLogLength = n
 }
 
 func Get(rawURL string, header http.Header, query url.Values, out interface{}) error {
@@ -135,10 +135,10 @@ func logInfo(req *http.Request, inbs []byte, res *http.Response, outbs []byte, c
 }
 
 func truncate(s string) string {
-	if len(s) <= logMaxLength {
+	if len(s) <= maxLogLength {
 		return s
 	}
-	return s[:logMaxLength]
+	return s[:maxLogLength]
 }
 
 func PostForm(url string, header http.Header, in url.Values, out interface{}) error {

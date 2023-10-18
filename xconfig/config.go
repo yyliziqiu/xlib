@@ -12,8 +12,7 @@ func Init(path string, c interface{}) error {
 		return fmt.Errorf("read config error [%v]", err)
 	}
 	if err := viper.Unmarshal(c); err != nil {
-		return fmt.Errorf("unmarshal config json error [%v]", err)
+		return fmt.Errorf("unmarshal config error [%v]", err)
 	}
-
 	return nil
 }

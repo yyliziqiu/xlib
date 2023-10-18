@@ -2,27 +2,38 @@ package xlog
 
 import "time"
 
+const textFormatter = "text"
+const jsonFormatter = "json"
+
 type Config struct {
-	Console    bool          `json:"console"`
-	Path       string        `json:"path"`
-	Name       string        `json:"name"`
-	Level      string        `json:"level"`
-	MaxAge     time.Duration `json:"maxAge"`
-	RotateTime time.Duration `json:"rotateTime"`
+	Console              bool
+	Name                 string
+	Path                 string
+	Formatter            string
+	Level                string
+	MaxAge               time.Duration
+	RotationTime         time.Duration
+	DisableLevelRotation bool
 }
 
 func (c Config) WithDefault() Config {
+	if c.Name == "" {
+		c.Name = "app"
+	}
 	if c.Path == "" {
 		c.Path = "logs"
+	}
+	if c.Formatter == "" {
+		c.Formatter = textFormatter
 	}
 	if c.Level == "" {
 		c.Level = "debug"
 	}
 	if c.MaxAge == 0 {
-		c.MaxAge = 5 * 24 * time.Hour
+		c.MaxAge = 7 * 24 * time.Hour
 	}
-	if c.RotateTime == 0 {
-		c.RotateTime = 24 * time.Hour
+	if c.RotationTime == 0 {
+		c.RotationTime = 24 * time.Hour
 	}
 	return c
 }

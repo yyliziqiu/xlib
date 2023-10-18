@@ -41,18 +41,3 @@ func RateFloat64(a float64, b float64) float64 {
 	}
 	return (a - b) / b
 }
-
-// RateIntInt deprecated
-func RateIntInt(a int, b int) float64 {
-	return RateInt(a, b)
-}
-
-// RateInt64Int64 deprecated
-func RateInt64Int64(a int64, b int64) float64 {
-	return RateInt64(a, b)
-}
-
-// RateFloat64Float64 deprecated
-func RateFloat64Float64(a float64, b float64) float64 {
-	return RateFloat64(a, b)
-}
