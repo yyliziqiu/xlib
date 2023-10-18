@@ -11,18 +11,22 @@ import (
 )
 
 type Config struct {
-	Id          string `json:"id"`
-	Addr        string `json:"addr"`
-	LogName     string `json:"log_name"`
-	LogDisabled bool   `json:"log_disabled"`
+	Id               string
+	Addr             string
+	ErrorLogName     string
+	AccessLogName    string
+	DisableAccessLog bool
 }
 
 func (c Config) WithDefault() Config {
 	if c.Id == "" {
 		c.Id = "api"
 	}
-	if c.LogName == "" {
-		c.LogName = "http-"
+	if c.ErrorLogName == "" {
+		c.ErrorLogName = "http-error"
+	}
+	if c.AccessLogName == "" {
+		c.AccessLogName = "http-access"
 	}
 	return c
 }
@@ -34,11 +38,9 @@ func Run(config Config, routes ...RoutesFunc) error {
 
 	gin.SetMode(gin.ReleaseMode)
 	gin.DisableConsoleColor()
-
-	setLogger(config)
+	setGinWriter(config)
 
 	engine := createEngine()
-
 	for _, v := range routes {
 		v(engine)
 	}
@@ -46,21 +48,25 @@ func Run(config Config, routes ...RoutesFunc) error {
 	return engine.Run(config.Addr)
 }
 
-var logger *logrus.Logger
+var (
+	errorLogger  *logrus.Logger
+	accessLogger *logrus.Logger
+)
 
-func setLogger(config Config) {
-	if !config.LogDisabled && logger == nil {
-		logger = xlog.MustNewLoggerByName(config.LogName)
+func setGinWriter(config Config) {
+	if errorLogger == nil {
+		errorLogger = xlog.MustNewLoggerByName(config.ErrorLogName)
+	}
+	if accessLogger == nil && !config.DisableAccessLog {
+		accessLogger = xlog.MustNewLoggerByName(config.AccessLogName)
 	}
 
-	var writer io.Writer
-	if logger == nil {
-		writer = logger.Writer()
+	gin.DefaultErrorWriter = errorLogger.Writer()
+	if accessLogger == nil {
+		gin.DefaultWriter = accessLogger.Writer()
 	} else {
-		writer = io.Discard
+		gin.DefaultWriter = io.Discard
 	}
-	gin.DefaultWriter = writer
-	gin.DefaultErrorWriter = writer
 }
 
 func createEngine() *gin.Engine {
@@ -73,10 +79,22 @@ func createEngine() *gin.Engine {
 }
 
 func recovery(ctx *gin.Context, err interface{}) {
-	logger.Errorf("Panic, path: %s, error: %v", ctx.FullPath(), err)
+	errorLogger.Errorf("Panic, path: %s, error: %v", ctx.FullPath(), err)
 	xresponse.InternalServerError(ctx)
 }
 
-func GetLogger() *logrus.Logger {
-	return logger
+func GetErrorLogger() *logrus.Logger {
+	return errorLogger
+}
+
+func SetErrorLogger(logger *logrus.Logger) {
+	errorLogger = logger
+}
+
+func GetAccessLogger() *logrus.Logger {
+	return accessLogger
+}
+
+func SetAccessLogger(logger *logrus.Logger) {
+	accessLogger = logger
 }

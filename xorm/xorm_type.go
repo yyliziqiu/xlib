@@ -57,7 +57,7 @@ func (c Config) WithDefault() Config {
 		c.ConnMaxLifetime = 10 * time.Minute
 	}
 	if c.LogName == "" {
-		c.LogName = fmt.Sprintf("gorm-%s-", c.Id)
+		c.LogName = fmt.Sprintf("gorm-%s", c.Id)
 	}
 	if c.LogLevel == 0 {
 		c.LogLevel = 4

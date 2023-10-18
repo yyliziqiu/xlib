@@ -21,7 +21,7 @@ func (c Config) WithDefault() Config {
 		c.Id = DefaultId
 	}
 	if c.LogName == "" {
-		c.LogName = fmt.Sprintf("elastic-%s-", c.Id)
+		c.LogName = fmt.Sprintf("elastic-%s", c.Id)
 	}
 	return c
 }

@@ -13,7 +13,7 @@ var ParamError = xerror.NewError("A1000", "param error")
 func BindForm(ctx *gin.Context, form interface{}) bool {
 	err := ctx.ShouldBind(form)
 	if err != nil {
-		logger.Warnf("Bind error, path: %s, form: %v, err: %v.", ctx.FullPath(), form, err)
+		errorLogger.Warnf("Bind error, path: %s, form: %v, err: %v.", ctx.FullPath(), form, err)
 		xresponse.Fail(ctx, ParamError)
 		return false
 	}
@@ -24,7 +24,7 @@ func BindForm(ctx *gin.Context, form interface{}) bool {
 func BindFormVerbose(ctx *gin.Context, form interface{}) bool {
 	err := ctx.ShouldBind(form)
 	if err != nil {
-		logger.Warnf("Bind error, path: %s, form: %v, err: %v.", ctx.FullPath(), form, err)
+		errorLogger.Warnf("Bind error, path: %s, form: %v, err: %v.", ctx.FullPath(), form, err)
 		xresponse.Fail(ctx, ParamError.With(err))
 		return false
 	}
