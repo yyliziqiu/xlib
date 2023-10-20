@@ -5,9 +5,9 @@ import (
 )
 
 type Api struct {
-	Domain string
+	BaseURL string
 }
 
 func (a Api) Url(path string) string {
-	return xutil.JoinURL(a.Domain, path)
+	return xutil.JoinURL(a.BaseURL, path)
 }
