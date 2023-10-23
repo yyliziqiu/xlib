@@ -15,12 +15,18 @@ var (
 )
 
 func NewQueue(n int) *Queue {
+	return NewQueueWithPersist(n, "")
+}
+
+func NewQueueWithPersist(n int, path string) *Queue {
 	if n <= 0 {
 		n = 1024
 	}
+
 	return &Queue{
-		step: n,
-		list: make([]interface{}, n+1),
+		step:     n,
+		list:     make([]interface{}, n+1),
+		snapshot: NewSnapshot(path),
 	}
 }
 
@@ -33,6 +39,8 @@ type Queue struct {
 	head int
 	tail int
 	mu   sync.RWMutex
+
+	snapshot *Snapshot
 }
 
 // 获取队列容量
@@ -209,6 +217,29 @@ func (q *Queue) getHeadItem() (interface{}, error) {
 // 获取队列尾元素
 func (q *Queue) getTailItem() (interface{}, error) {
 	return q.get(q.tailPrevious())
+}
+
+// 重置队列
+func (q *Queue) reset(data []interface{}) {
+	initCap := (len(data)/q.step+1)*q.step + 1
+
+	list := make([]interface{}, initCap)
+	for i, item := range data {
+		list[i] = item
+	}
+
+	q.list = list
+	q.head = 0
+	q.tail = len(data)
+}
+
+// 复制队列列表
+func (q *Queue) copyItems() []interface{} {
+	cpy := make([]interface{}, 0, q.len())
+	for i := q.head; i != q.tail; i = q.next(i) {
+		cpy = append(cpy, q.list[i])
+	}
+	return cpy
 }
 
 // ************************* export *************************
@@ -521,16 +552,7 @@ func (q *Queue) Reset(data []interface{}) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	initCap := (len(data)/q.step+1)*q.step + 1
-
-	list := make([]interface{}, initCap)
-	for i, item := range data {
-		list[i] = item
-	}
-
-	q.list = list
-	q.head = 0
-	q.tail = len(data)
+	q.reset(data)
 }
 
 // CopyItems 复制队列列表
@@ -538,10 +560,27 @@ func (q *Queue) CopyItems() []interface{} {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
 
-	cpy := make([]interface{}, 0, q.len())
-	for i := q.head; i != q.tail; i = q.next(i) {
-		cpy = append(cpy, q.list[i])
+	return q.copyItems()
+}
+
+func (q *Queue) Load() error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	var data []interface{}
+	err := q.snapshot.Load(&data)
+	if err != nil {
+		return err
 	}
 
-	return cpy
+	q.reset(data)
+
+	return nil
+}
+
+func (q *Queue) Store() error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	return q.snapshot.Store(q.copyItems())
 }
