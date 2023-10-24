@@ -10,13 +10,12 @@ import (
 	"strings"
 )
 
-type JSONHTTP struct {
+type TextHTTP struct {
 	Client      *http.Client
-	ErrorStruct interface{} // must not point
 	RequestFunc func(req *http.Request)
 }
 
-func (h *JSONHTTP) Get(rawURL string, header http.Header, query url.Values, out interface{}) (interface{}, error) {
+func (h *TextHTTP) Get(rawURL string, header http.Header, query url.Values) ([]byte, error) {
 	// 解析 url，合并参数
 	uo, err := url.Parse(rawURL)
 	if err != nil {
@@ -43,10 +42,10 @@ func (h *JSONHTTP) Get(rawURL string, header http.Header, query url.Values, out 
 	defer res.Body.Close()
 
 	// 解析并返回响应结果
-	return h.handleResponse(res, out)
+	return h.handleResponse(res)
 }
 
-func (h *JSONHTTP) newRequest(method string, url string, header http.Header, body io.Reader) (*http.Request, error) {
+func (h *TextHTTP) newRequest(method string, url string, header http.Header, body io.Reader) (*http.Request, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("new request failed, %v", err)
@@ -60,52 +59,27 @@ func (h *JSONHTTP) newRequest(method string, url string, header http.Header, bod
 	return req, nil
 }
 
-func (h *JSONHTTP) doRequest(req *http.Request) (*http.Response, error) {
+func (h *TextHTTP) doRequest(req *http.Request) (*http.Response, error) {
 	if h.Client == nil {
 		h.Client = http.DefaultClient
 	}
 	return h.Client.Do(req)
 }
 
-func (h *JSONHTTP) handleResponse(res *http.Response, out interface{}) (interface{}, error) {
+func (h *TextHTTP) handleResponse(res *http.Response) ([]byte, error) {
 	outbs, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read response failed, %v", err)
 	}
 
-	// 校验 content type
-	if !strings.Contains(strings.ToLower(res.Header.Get("Content-Type")), "application/json") {
-		return nil, fmt.Errorf("response content type is not application/json, status code: %d, content type: %s, content: %s",
-			res.StatusCode, res.Header.Get("Content-Type"), string(outbs))
+	if res.StatusCode != http.StatusOK {
+		return outbs, NewStatusError(res.StatusCode, string(outbs))
 	}
 
-	if res.StatusCode == http.StatusOK {
-		if out != nil {
-			err = json.Unmarshal(outbs, out)
-			if err != nil {
-				return nil, fmt.Errorf("unmarshal successful response failed, %s", err)
-			}
-		}
-	} else {
-		cpy := h.ErrorStruct
-		if h.ErrorStruct != nil {
-			err = json.Unmarshal(outbs, &cpy)
-			if err != nil {
-				return nil, fmt.Errorf("unmarshal fail response failed, %s", err)
-			}
-		} else if out != nil {
-			err = json.Unmarshal(outbs, out)
-			if err != nil {
-				return nil, fmt.Errorf("unmarshal fail response failed, %s", err)
-			}
-		}
-		return cpy, NewStatusError(res.StatusCode, string(outbs))
-	}
-
-	return nil, nil
+	return outbs, nil
 }
 
-func (h *JSONHTTP) PostForm(url string, header http.Header, in url.Values, out interface{}) (interface{}, error) {
+func (h *TextHTTP) PostForm(url string, header http.Header, in url.Values) ([]byte, error) {
 	// 创建请求
 	req, err := h.newRequest(http.MethodPost, url, header, strings.NewReader(in.Encode()))
 	if err != nil {
@@ -123,10 +97,10 @@ func (h *JSONHTTP) PostForm(url string, header http.Header, in url.Values, out i
 	defer res.Body.Close()
 
 	// 解析并返回响应结果
-	return h.handleResponse(res, out)
+	return h.handleResponse(res)
 }
 
-func (h *JSONHTTP) PostJSON(url string, header http.Header, in interface{}, out interface{}) (interface{}, error) {
+func (h *TextHTTP) PostJSON(url string, header http.Header, in interface{}) ([]byte, error) {
 	// json 序列化
 	if in == nil {
 		in = struct{}{}
@@ -153,5 +127,5 @@ func (h *JSONHTTP) PostJSON(url string, header http.Header, in interface{}, out 
 	defer res.Body.Close()
 
 	// 解析并返回响应结果
-	return h.handleResponse(res, out)
+	return h.handleResponse(res)
 }
