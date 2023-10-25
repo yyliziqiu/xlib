@@ -6,9 +6,9 @@ const (
 	textFormatter = "text"
 	jsonFormatter = "json"
 
-	FieldsFilename = "filename"
-	FieldsFunction = "function"
-	FieldsAll      = "all"
+	fieldsFilename = "filename"
+	fieldsFunction = "function"
+	fieldsAll      = "all"
 )
 
 type Config struct {
@@ -45,7 +45,7 @@ func (c Config) WithDefault() Config {
 		c.Formatter = textFormatter
 	}
 	if c.CallerFields == "" {
-		c.CallerFields = FieldsFunction
+		c.CallerFields = fieldsFunction
 	}
 	if c.TimestampFormat == "" {
 		c.TimestampFormat = "2006-01-02 15:04:05"

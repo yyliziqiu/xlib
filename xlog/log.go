@@ -112,11 +112,11 @@ func getFormatter(config Config) logrus.Formatter {
 
 func getCallerPrettyfier(fields string) func(frame *runtime.Frame) (function string, file string) {
 	switch fields {
-	case FieldsFilename:
+	case fieldsFilename:
 		return func(frame *runtime.Frame) (function string, file string) {
 			return "", fmt.Sprintf("%s:%d", frame.File, frame.Line)
 		}
-	case FieldsFunction:
+	case fieldsFunction:
 		return func(frame *runtime.Frame) (function string, file string) {
 			return frame.Function, ""
 		}
