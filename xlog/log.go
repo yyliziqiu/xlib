@@ -34,7 +34,10 @@ func Init(config Config) error {
 		return err
 	}
 
-	Console, err = NewConsoleLogger(Config{Level: "debug"})
+	Console, err = NewConsoleLogger(Config{
+		Level:        "debug",
+		EnableCaller: true,
+	})
 	if err != nil {
 		return err
 	}
@@ -64,7 +67,7 @@ func NewConsoleLogger(config Config) (*logrus.Logger, error) {
 	logger := logrus.New()
 
 	// 禁止输出方法名
-	logger.SetReportCaller(false)
+	logger.SetReportCaller(config.EnableCaller)
 
 	// 设置日志等级
 	logger.SetLevel(getLevel(config.Level))
