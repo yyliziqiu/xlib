@@ -2,6 +2,12 @@ package xsql
 
 import (
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+
+	"github.com/yyliziqiu/xlib/xlog"
 )
 
 const (
@@ -24,6 +30,7 @@ type Config struct {
 	ConnMaxIdleTime time.Duration
 
 	// only valid when use gorm
+	EnableORM                    bool
 	EnableLog                    bool
 	LogName                      string
 	LogLevel                     int
@@ -58,4 +65,27 @@ func (c Config) WithDefault() Config {
 		c.LogSlowThreshold = 15 * time.Second
 	}
 	return c
+}
+
+func (c Config) GORMConfig() *gorm.Config {
+	if !c.EnableLog {
+		return &gorm.Config{}
+	}
+
+	var lgg *logrus.Logger
+	if c.LogName != "" {
+		lgg = xlog.MustNewLoggerByName(c.LogName)
+	} else {
+		if globalLogger == nil {
+			globalLogger = xlog.MustNewLoggerByName("gorm")
+		}
+		lgg = globalLogger
+	}
+
+	return &gorm.Config{Logger: logger.New(lgg, logger.Config{
+		LogLevel:                  logger.LogLevel(c.LogLevel),    // Log level
+		SlowThreshold:             c.LogSlowThreshold,             // Slow SQL threshold
+		ParameterizedQueries:      c.LogParameterizedQueries,      // Don't include params in the SQL log
+		IgnoreRecordNotFoundError: c.LogIgnoreRecordNotFoundError, // Ignore ErrRecordNotFound error for logger
+	})}
 }

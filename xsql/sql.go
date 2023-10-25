@@ -2,15 +2,27 @@ package xsql
 
 import (
 	"database/sql"
+	"errors"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
+	"github.com/sirupsen/logrus"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var (
-	cfs map[string]Config
-	dbs map[string]*sql.DB
+	globalLogger *logrus.Logger
+
+	cfs  map[string]Config
+	sqls map[string]*sql.DB
+	orms map[string]*gorm.DB
 )
+
+func SetGlobalLogger(logger *logrus.Logger) {
+	globalLogger = logger
+}
 
 func Init(configs ...Config) error {
 	cfs = make(map[string]Config, len(configs))
@@ -19,20 +31,33 @@ func Init(configs ...Config) error {
 		cfs[config.Id] = config
 	}
 
-	dbs = make(map[string]*sql.DB, len(cfs))
+	sqls = make(map[string]*sql.DB, len(cfs))
+	orms = make(map[string]*gorm.DB, len(cfs))
+
 	for _, cf := range cfs {
-		db, err := New(cf)
+		db, err := NewSQL(cf)
 		if err != nil {
 			Finally()
 			return err
 		}
-		dbs[cf.Id] = db
+		sqls[cf.Id] = db
+
+		if !cf.EnableORM {
+			continue
+		}
+
+		orm, err := NewORM(cf, db)
+		if err != nil {
+			Finally()
+			return err
+		}
+		orms[cf.Id] = orm
 	}
 
 	return nil
 }
 
-func New(config Config) (*sql.DB, error) {
+func NewSQL(config Config) (*sql.DB, error) {
 	db, err := sql.Open(config.Type, config.DSN)
 	if err != nil {
 		return nil, err
@@ -46,8 +71,19 @@ func New(config Config) (*sql.DB, error) {
 	return db, nil
 }
 
+func NewORM(config Config, db *sql.DB) (*gorm.DB, error) {
+	switch config.Type {
+	case DBTypeMySQL:
+		return gorm.Open(mysql.New(mysql.Config{Conn: db}), config.GORMConfig())
+	case DBTypePostgres:
+		return gorm.Open(postgres.New(postgres.Config{Conn: db}), config.GORMConfig())
+	default:
+		return nil, errors.New("not support db type")
+	}
+}
+
 func Finally() {
-	for _, db := range dbs {
+	for _, db := range sqls {
 		_ = db.Close()
 	}
 }
@@ -61,9 +97,17 @@ func GetDefaultConfig() Config {
 }
 
 func GetDB(id string) *sql.DB {
-	return dbs[id]
+	return sqls[id]
 }
 
 func GetDefaultDB() *sql.DB {
 	return GetDB(DefaultId)
+}
+
+func GetORM(id string) *gorm.DB {
+	return orms[id]
+}
+
+func GetDefaultORM() *gorm.DB {
+	return GetORM(DefaultId)
 }
