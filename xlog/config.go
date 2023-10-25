@@ -2,17 +2,26 @@ package xlog
 
 import "time"
 
-const textFormatter = "text"
-const jsonFormatter = "json"
+const (
+	textFormatter = "text"
+	jsonFormatter = "json"
+
+	FieldsFilename = "filename"
+	FieldsFunction = "function"
+	FieldsAll      = "all"
+)
 
 type Config struct {
 	Console              bool
 	Name                 string
 	Path                 string
-	Formatter            string
 	Level                string
 	MaxAge               time.Duration
 	RotationTime         time.Duration
+	Formatter            string
+	EnableCaller         bool
+	CallerFields         string
+	TimestampFormat      string
 	DisableLevelRotation bool
 }
 
@@ -23,9 +32,6 @@ func (c Config) WithDefault() Config {
 	if c.Path == "" {
 		c.Path = "logs"
 	}
-	if c.Formatter == "" {
-		c.Formatter = textFormatter
-	}
 	if c.Level == "" {
 		c.Level = "debug"
 	}
@@ -34,6 +40,15 @@ func (c Config) WithDefault() Config {
 	}
 	if c.RotationTime == 0 {
 		c.RotationTime = 24 * time.Hour
+	}
+	if c.Formatter == "" {
+		c.Formatter = textFormatter
+	}
+	if c.CallerFields == "" {
+		c.CallerFields = FieldsFunction
+	}
+	if c.TimestampFormat == "" {
+		c.TimestampFormat = "2006-01-02 15:04:05"
 	}
 	return c
 }

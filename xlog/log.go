@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	rotate "github.com/lestrrat/go-file-rotatelogs"
-	"github.com/sirupsen/logrus"
-
 	"github.com/rifflock/lfshook"
+	"github.com/sirupsen/logrus"
 
 	"github.com/yyliziqiu/xlib/xutil"
 )
@@ -34,7 +34,7 @@ func Init(config Config) error {
 		return err
 	}
 
-	Console, err = NewConsoleLogger("debug")
+	Console, err = NewConsoleLogger(Config{Level: "debug"})
 	if err != nil {
 		return err
 	}
@@ -55,22 +55,22 @@ func NewLoggerByName(name string) (*logrus.Logger, error) {
 
 func NewLogger(config Config) (*logrus.Logger, error) {
 	if config.Console {
-		return NewConsoleLogger(config.Level)
+		return NewConsoleLogger(config)
 	}
 	return NewFileLogger(config)
 }
 
-func NewConsoleLogger(level string) (*logrus.Logger, error) {
+func NewConsoleLogger(config Config) (*logrus.Logger, error) {
 	logger := logrus.New()
 
 	// 禁止输出方法名
 	logger.SetReportCaller(false)
 
 	// 设置日志等级
-	logger.SetLevel(getLevel(level))
+	logger.SetLevel(getLevel(config.Level))
 
 	// 设置日志格式
-	logger.SetFormatter(getFormatter(textFormatter))
+	logger.SetFormatter(getFormatter(config))
 
 	return logger, nil
 }
@@ -83,15 +83,48 @@ func getLevel(name string) logrus.Level {
 	return level
 }
 
-func getFormatter(name string) logrus.Formatter {
-	timestampFormat := "2006-01-02 15:04:05"
+func getFormatter(config Config) logrus.Formatter {
+	var (
+		formatter        = config.Formatter
+		timestampFormat  = config.TimestampFormat
+		callerPrettyfier = getCallerPrettyfier(config.CallerFields)
+	)
 
-	switch name {
-	case "json":
-		return &logrus.JSONFormatter{TimestampFormat: timestampFormat}
+	if timestampFormat == "" {
+		timestampFormat = "2006-01-02 15:04:05"
 	}
 
-	return &logrus.TextFormatter{TimestampFormat: timestampFormat, DisableQuote: true}
+	switch formatter {
+	case "json":
+		return &logrus.JSONFormatter{
+			TimestampFormat:  timestampFormat,
+			CallerPrettyfier: callerPrettyfier,
+		}
+	default:
+		return &logrus.TextFormatter{
+			DisableQuote:     true,
+			PadLevelText:     true,
+			TimestampFormat:  timestampFormat,
+			CallerPrettyfier: callerPrettyfier,
+		}
+	}
+}
+
+func getCallerPrettyfier(fields string) func(frame *runtime.Frame) (function string, file string) {
+	switch fields {
+	case FieldsFilename:
+		return func(frame *runtime.Frame) (function string, file string) {
+			return "", fmt.Sprintf("%s:%d", frame.File, frame.Line)
+		}
+	case FieldsFunction:
+		return func(frame *runtime.Frame) (function string, file string) {
+			return frame.Function, ""
+		}
+	default:
+		return func(frame *runtime.Frame) (function string, file string) {
+			return frame.Function, fmt.Sprintf("%s:%d", frame.File, frame.Line)
+		}
+	}
 }
 
 func NewFileLogger(config Config) (*logrus.Logger, error) {
@@ -101,7 +134,7 @@ func NewFileLogger(config Config) (*logrus.Logger, error) {
 	logger.SetOutput(io.Discard)
 
 	// 禁止输出方法名
-	logger.SetReportCaller(false)
+	logger.SetReportCaller(config.EnableCaller)
 
 	// 设置日志等级
 	logger.SetLevel(getLevel(config.Level))
@@ -127,7 +160,6 @@ func newTimeRotationHook(config Config) (*lfshook.LfsHook, error) {
 	var (
 		name         = config.Name
 		path         = config.Path
-		formatter    = config.Formatter
 		maxAge       = config.MaxAge
 		rotationTime = config.RotationTime
 	)
@@ -149,14 +181,13 @@ func newTimeRotationHook(config Config) (*lfshook.LfsHook, error) {
 		return nil, fmt.Errorf("create rotate error [%v]", err)
 	}
 
-	return lfshook.NewHook(rotation, getFormatter(formatter)), nil
+	return lfshook.NewHook(rotation, getFormatter(config)), nil
 }
 
 func newTimeLevelRotationHook(config Config) (*lfshook.LfsHook, error) {
 	var (
 		name         = config.Name
 		path         = config.Path
-		formatter    = config.Formatter
 		maxAge       = config.MaxAge
 		rotationTime = config.RotationTime
 	)
@@ -197,7 +228,7 @@ func newTimeLevelRotationHook(config Config) (*lfshook.LfsHook, error) {
 		logrus.ErrorLevel: errorRotation,
 		logrus.FatalLevel: errorRotation,
 		logrus.PanicLevel: errorRotation,
-	}, getFormatter(formatter)), nil
+	}, getFormatter(config)), nil
 }
 
 func NewRotation(dirname string, filename string, maxAge time.Duration, RotationTime time.Duration) (*rotate.RotateLogs, error) {
