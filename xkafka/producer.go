@@ -12,7 +12,7 @@ func NewDefaultProducer() (*kafka.Producer, error) {
 }
 
 func NewProducerById(id string) (*kafka.Producer, error) {
-	config, ok := cs[id]
+	config, ok := cfs[id]
 	if !ok {
 		return nil, fmt.Errorf("kafka ID: %s not exist")
 	}
@@ -20,8 +20,6 @@ func NewProducerById(id string) (*kafka.Producer, error) {
 }
 
 func NewProducer(config Config) (*kafka.Producer, error) {
-	config = config.WithDefault()
-
 	conf := &kafka.ConfigMap{
 		"bootstrap.servers":     config.BootstrapServers,
 		"request.required.acks": config.RequiredAcks,
@@ -47,6 +45,5 @@ func ProduceObject(producer *kafka.Producer, topic string, object interface{}) e
 	if err != nil {
 		return err
 	}
-
 	return ProduceMessage(producer, topic, message)
 }

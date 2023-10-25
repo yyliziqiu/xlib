@@ -11,7 +11,7 @@ func NewDefaultConsumer() (*kafka.Consumer, error) {
 }
 
 func NewConsumerByConfigId(id string) (*kafka.Consumer, error) {
-	config, ok := cs[id]
+	config, ok := cfs[id]
 	if !ok {
 		return nil, fmt.Errorf("kafka ID: %s not exist")
 	}
@@ -19,8 +19,6 @@ func NewConsumerByConfigId(id string) (*kafka.Consumer, error) {
 }
 
 func NewConsumer(config Config) (*kafka.Consumer, error) {
-	config = config.WithDefault()
-
 	var conf = &kafka.ConfigMap{
 		"bootstrap.servers":         config.BootstrapServers,
 		"group.id":                  config.GroupId,

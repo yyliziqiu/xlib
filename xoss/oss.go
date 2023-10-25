@@ -2,23 +2,21 @@ package xoss
 
 import (
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-
-	"github.com/yyliziqiu/xlib/xutil"
 )
 
 const DefaultId = "default"
 
 var (
-	configs map[string]Config
+	cfs     map[string]Config
 	clients map[string]*oss.Client
 )
 
 type Config struct {
-	Id        string         `json:"id"`
-	Endpoint  string         `json:"endpoint"`
-	KeyId     string         `json:"key_id"`
-	KeySecret string         `json:"key_secret"`
-	Buckets   []BucketConfig `json:"buckets"`
+	Id        string
+	Endpoint  string
+	KeyId     string
+	KeySecret string
+	Buckets   []BucketConfig
 }
 
 func (c Config) WithDefault() Config {
@@ -35,19 +33,25 @@ type BucketConfig struct {
 }
 
 func Init(configs ...Config) error {
-	clients = make(map[string]*oss.Client, len(configs))
+	cfs = make(map[string]Config, len(configs))
 	for _, config := range configs {
-		db, err := New(config)
+		config = config.WithDefault()
+		cfs[config.Id] = config
+	}
+
+	clients = make(map[string]*oss.Client, len(cfs))
+	for _, cf := range cfs {
+		db, err := New(cf)
 		if err != nil {
 			return err
 		}
-		clients[xutil.IES(config.Id, DefaultId)] = db
+		clients[cf.Id] = db
 	}
+
 	return nil
 }
 
 func New(config Config) (*oss.Client, error) {
-	config = config.WithDefault()
 	return oss.New(config.Endpoint, config.KeyId, config.KeySecret)
 }
 
@@ -62,7 +66,7 @@ func GetDefaultClient() *oss.Client {
 func GetBucketConfig(clientId string, bucketId string) BucketConfig {
 	def := BucketConfig{}
 
-	config, ok := configs[clientId]
+	config, ok := cfs[clientId]
 	if !ok {
 		return def
 	}

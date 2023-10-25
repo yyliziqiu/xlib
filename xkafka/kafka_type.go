@@ -8,30 +8,30 @@ const (
 )
 
 type Config struct {
-	Id   string `json:"id"`
-	Role string `json:"role"`
+	Id   string
+	Role string
 
 	// common
-	BootstrapServers string `json:"bootstrapServers"`
-	SecurityProtocol string `json:"securityProtocol"`
-	SaslUsername     string `json:"saslUsername"`
-	SaslPassword     string `json:"saslPassword"`
-	SaslMechanism    string `json:"saslMechanism"`
-	SslCaLocation    string `json:"sslCaLocation"`
+	BootstrapServers string
+	SecurityProtocol string
+	SaslUsername     string
+	SaslPassword     string
+	SaslMechanism    string
+	SslCaLocation    string
 
 	// producer
-	RequiredAcks int    `json:"requiredAcks"`
-	Topic        string `json:"topic"`
+	RequiredAcks int
+	Topic        string
 
 	// consumer
-	Topics            []string `json:"topics"`
-	GroupId           string   `json:"groupId"`
-	OffsetReset       string   `json:"offsetReset"`
-	PollInterval      int      `json:"pollInterval"`
-	SessionTimeout    int      `json:"sessionTimeout"`
-	HeartbeatInterval int      `json:"heartbeatInterval"`
-	FetchMax          int      `json:"fetchMax"`
-	PartitionFetchMax int      `json:"partitionFetchMax"`
+	Topics            []string
+	GroupId           string
+	OffsetReset       string
+	PollInterval      int
+	SessionTimeout    int
+	HeartbeatInterval int
+	FetchMax          int
+	PartitionFetchMax int
 }
 
 func (c Config) WithDefault() Config {

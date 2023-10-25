@@ -13,15 +13,23 @@ const (
 
 type Config struct {
 	// must
-	Id   string `json:"id"`
-	DSN  string `json:"dsn"`
-	Type string `json:"type"`
+	DSN string
 
 	// optional
-	MaxOpenConns    int           `json:"maxOpenConns"`
-	MaxIdleConns    int           `json:"maxIdleConns"`
-	ConnMaxLifetime time.Duration `json:"connMaxLifetime"`
-	ConnMaxIdleTime time.Duration `json:"connMaxIdleTime"`
+	Id              string
+	Type            string
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+	ConnMaxIdleTime time.Duration
+
+	// only valid when use gorm
+	EnableLog                    bool
+	LogName                      string
+	LogLevel                     int
+	LogSlowThreshold             time.Duration
+	LogParameterizedQueries      bool
+	LogIgnoreRecordNotFoundError bool
 }
 
 func (c Config) WithDefault() Config {
@@ -42,6 +50,12 @@ func (c Config) WithDefault() Config {
 	}
 	if c.ConnMaxIdleTime == 0 {
 		c.ConnMaxLifetime = 10 * time.Minute
+	}
+	if c.LogLevel == 0 {
+		c.LogLevel = 4
+	}
+	if c.LogSlowThreshold == 0 {
+		c.LogSlowThreshold = 15 * time.Second
 	}
 	return c
 }

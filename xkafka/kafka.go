@@ -2,20 +2,19 @@ package xkafka
 
 import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-
-	"github.com/yyliziqiu/xlib/xutil"
 )
 
 var (
-	cs        map[string]Config
+	cfs       map[string]Config
 	consumers map[string]*kafka.Consumer
 	producers map[string]*kafka.Producer
 )
 
 func Init(autoNew bool, configs ...Config) error {
-	cs = make(map[string]Config)
+	cfs = make(map[string]Config, len(configs))
 	for _, config := range configs {
-		cs[config.Id] = config
+		config = config.WithDefault()
+		cfs[config.Id] = config
 	}
 
 	if !autoNew {
@@ -24,22 +23,22 @@ func Init(autoNew bool, configs ...Config) error {
 
 	consumers = make(map[string]*kafka.Consumer, 8)
 	producers = make(map[string]*kafka.Producer, 8)
-	for _, config := range configs {
-		switch config.GetRole() {
+	for _, cf := range cfs {
+		switch cf.GetRole() {
 		case RoleConsumer:
-			consumer, err := NewConsumer(config)
+			consumer, err := NewConsumer(cf)
 			if err != nil {
 				Finally()
 				return err
 			}
-			consumers[xutil.IES(config.Id, DefaultId)] = consumer
+			consumers[cf.Id] = consumer
 		case RoleProducer:
-			producer, err := NewProducer(config)
+			producer, err := NewProducer(cf)
 			if err != nil {
 				Finally()
 				return err
 			}
-			producers[xutil.IES(config.Id, DefaultId)] = producer
+			producers[cf.Id] = producer
 		}
 	}
 
@@ -60,7 +59,7 @@ func GetDefaultConfig() Config {
 }
 
 func GetConfig(id string) Config {
-	return cs[id]
+	return cfs[id]
 }
 
 func GetDefaultTopic() string {
@@ -68,7 +67,7 @@ func GetDefaultTopic() string {
 }
 
 func GetTopic(id string) string {
-	return cs[id].Topic
+	return cfs[id].Topic
 }
 
 func GetDefaultConsumer() *kafka.Consumer {

@@ -5,28 +5,34 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-
-	"github.com/yyliziqiu/xlib/xutil"
 )
 
-var dbs map[string]*sql.DB
+var (
+	cfs map[string]Config
+	dbs map[string]*sql.DB
+)
 
 func Init(configs ...Config) error {
-	dbs = make(map[string]*sql.DB, len(configs))
+	cfs = make(map[string]Config, len(configs))
 	for _, config := range configs {
-		db, err := New(config)
+		config = config.WithDefault()
+		cfs[config.Id] = config
+	}
+
+	dbs = make(map[string]*sql.DB, len(cfs))
+	for _, cf := range cfs {
+		db, err := New(cf)
 		if err != nil {
 			Finally()
 			return err
 		}
-		dbs[xutil.IES(config.Id, DefaultId)] = db
+		dbs[cf.Id] = db
 	}
+
 	return nil
 }
 
 func New(config Config) (*sql.DB, error) {
-	config = config.WithDefault()
-
 	db, err := sql.Open(config.Type, config.DSN)
 	if err != nil {
 		return nil, err
@@ -46,8 +52,12 @@ func Finally() {
 	}
 }
 
-func NewWithDSN(typ string, dsn string) (*sql.DB, error) {
-	return New(Config{DSN: dsn, Type: typ})
+func GetConfig(id string) Config {
+	return cfs[id]
+}
+
+func GetDefaultConfig() Config {
+	return GetConfig(DefaultId)
 }
 
 func GetDB(id string) *sql.DB {

@@ -2,32 +2,37 @@ package xredis
 
 import (
 	"github.com/go-redis/redis/v8"
-
-	"github.com/yyliziqiu/xlib/xutil"
 )
 
 var (
+	cfs      map[string]Config
 	clients  map[string]*redis.Client
 	clusters map[string]*redis.ClusterClient
 )
 
 func Init(configs ...Config) error {
-	clients = make(map[string]*redis.Client, len(configs))
-	clusters = make(map[string]*redis.ClusterClient, len(configs))
+	cfs = make(map[string]Config, len(configs))
 	for _, config := range configs {
-		cli, clu, err := New(config)
+		config = config.WithDefault()
+		cfs[config.Id] = config
+	}
+
+	clients = make(map[string]*redis.Client, len(cfs))
+	clusters = make(map[string]*redis.ClusterClient, len(cfs))
+	for _, cf := range cfs {
+		cli, clu, err := New(cf)
 		if err != nil {
 			Finally()
 			return err
 		}
-		id := xutil.IES(config.Id, DefaultId)
 		if cli != nil {
-			clients[id] = cli
+			clients[cf.Id] = cli
 		}
 		if clu != nil {
-			clusters[id] = clu
+			clusters[cf.Id] = clu
 		}
 	}
+
 	return nil
 }
 
@@ -47,8 +52,6 @@ func New(config Config) (*redis.Client, *redis.ClusterClient, error) {
 }
 
 func NewClient(config Config) *redis.Client {
-	config = config.WithDefault()
-
 	return redis.NewClient(&redis.Options{
 		Addr:               config.Addr,
 		Username:           config.Username,
@@ -68,8 +71,6 @@ func NewClient(config Config) *redis.Client {
 }
 
 func NewClusterClient(config Config) *redis.ClusterClient {
-	config = config.WithDefault()
-
 	ops := &redis.ClusterOptions{
 		Addrs:              config.Addrs,
 		Username:           config.Username,
@@ -99,8 +100,6 @@ func NewClusterClient(config Config) *redis.ClusterClient {
 }
 
 func NewFailoverClient(config Config) *redis.Client {
-	config = config.WithDefault()
-
 	ops := &redis.FailoverOptions{
 		MasterName:         config.MasterName,
 		SentinelAddrs:      config.SentinelAddrs,
@@ -129,8 +128,6 @@ func NewFailoverClient(config Config) *redis.Client {
 }
 
 func NewFailoverClusterClient(config Config) *redis.ClusterClient {
-	config = config.WithDefault()
-
 	ops := &redis.FailoverOptions{
 		MasterName:         config.MasterName,
 		SentinelAddrs:      config.SentinelAddrs,

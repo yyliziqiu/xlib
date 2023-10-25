@@ -1,7 +1,6 @@
 package xorm
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -20,21 +19,21 @@ const (
 
 type Config struct {
 	// must
-	Id   string `json:"id"`
-	DSN  string `json:"dsn"`
-	Type string `json:"type"`
+	DSN string
 
 	// optional
-	MaxOpenConns                 int           `json:"max_open_conns"`
-	MaxIdleConns                 int           `json:"max_idle_conns"`
-	ConnMaxLifetime              time.Duration `json:"conn_max_lifetime"`
-	ConnMaxIdleTime              time.Duration `json:"conn_max_idle_time"`
-	LogEnabled                   bool          `json:"log_enabled"`
-	LogName                      string        `json:"log_name"`
-	LogLevel                     int           `json:"log_level"`
-	LogSlowThreshold             time.Duration `json:"log_slow_threshold"`
-	LogParameterizedQueries      bool          `json:"log_parameterized_queries"`
-	LogIgnoreRecordNotFoundError bool          `json:"log_ignore_record_not_found_error"`
+	Id                           string
+	Type                         string
+	MaxOpenConns                 int
+	MaxIdleConns                 int
+	ConnMaxLifetime              time.Duration
+	ConnMaxIdleTime              time.Duration
+	EnableLog                    bool
+	LogName                      string
+	LogLevel                     int
+	LogSlowThreshold             time.Duration
+	LogParameterizedQueries      bool
+	LogIgnoreRecordNotFoundError bool
 }
 
 func (c Config) WithDefault() Config {
@@ -56,9 +55,6 @@ func (c Config) WithDefault() Config {
 	if c.ConnMaxIdleTime == 0 {
 		c.ConnMaxLifetime = 10 * time.Minute
 	}
-	if c.LogName == "" {
-		c.LogName = fmt.Sprintf("gorm-%s", c.Id)
-	}
 	if c.LogLevel == 0 {
 		c.LogLevel = 4
 	}
@@ -69,18 +65,21 @@ func (c Config) WithDefault() Config {
 }
 
 func (c Config) GORMConfig() *gorm.Config {
-	if !c.LogEnabled {
+	if !c.EnableLog {
 		return &gorm.Config{}
 	}
 
-	var lg *logrus.Logger
-	if globalLogger != nil {
-		lg = globalLogger
+	var lgg *logrus.Logger
+	if c.LogName != "" {
+		lgg = xlog.MustNewLoggerByName(c.LogName)
 	} else {
-		lg = xlog.MustNewLoggerByName(c.LogName)
+		if globalLogger == nil {
+			globalLogger = xlog.MustNewLoggerByName("gorm")
+		}
+		lgg = globalLogger
 	}
 
-	return &gorm.Config{Logger: logger.New(lg, logger.Config{
+	return &gorm.Config{Logger: logger.New(lgg, logger.Config{
 		LogLevel:                  logger.LogLevel(c.LogLevel),    // Log level
 		SlowThreshold:             c.LogSlowThreshold,             // Slow SQL threshold
 		ParameterizedQueries:      c.LogParameterizedQueries,      // Don't include params in the SQL log
