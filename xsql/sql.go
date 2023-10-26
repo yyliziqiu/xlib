@@ -72,6 +72,15 @@ func NewSQL(config Config) (*sql.DB, error) {
 }
 
 func NewORM(config Config, db *sql.DB) (*gorm.DB, error) {
+	var err error
+
+	if db == nil {
+		db, err = NewSQL(config)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	switch config.Type {
 	case DBTypeMySQL:
 		return gorm.Open(mysql.New(mysql.Config{Conn: db}), config.GORMConfig())
