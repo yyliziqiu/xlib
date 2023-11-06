@@ -48,7 +48,7 @@ func (h *TextHTTP) Get(rawURL string, header http.Header, query url.Values) ([]b
 func (h *TextHTTP) newRequest(method string, url string, header http.Header, body io.Reader) (*http.Request, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return nil, fmt.Errorf("new request failed, %v", err)
+		return nil, fmt.Errorf("new request error [%v]", err)
 	}
 	for key, values := range header {
 		for _, value := range values {
@@ -69,7 +69,7 @@ func (h *TextHTTP) doRequest(req *http.Request) (*http.Response, error) {
 func (h *TextHTTP) handleResponse(res *http.Response) ([]byte, error) {
 	outbs, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read response failed, %v", err)
+		return nil, fmt.Errorf("read response error [%v]", err)
 	}
 
 	if res.StatusCode != http.StatusOK {
@@ -107,7 +107,7 @@ func (h *TextHTTP) PostJSON(url string, header http.Header, in interface{}) ([]b
 	}
 	inbs, err := json.Marshal(in)
 	if err != nil {
-		return nil, fmt.Errorf("marshal request body failed, %v", err)
+		return nil, fmt.Errorf("marshal request body error [%v]", err)
 	}
 
 	// 创建请求

@@ -38,12 +38,12 @@ func NewConsumer(config Config) (*kafka.Consumer, error) {
 
 	consumer, err := kafka.NewConsumer(conf)
 	if err != nil {
-		return nil, fmt.Errorf("create consumer failed [%w]", err)
+		return nil, fmt.Errorf("create consumer error [%v]", err)
 	}
 
 	err = consumer.SubscribeTopics(config.Topics, nil)
 	if err != nil {
-		return nil, fmt.Errorf("subscribe topic failed [%w]", err)
+		return nil, fmt.Errorf("subscribe topic error [%v]", err)
 	}
 
 	return consumer, nil
