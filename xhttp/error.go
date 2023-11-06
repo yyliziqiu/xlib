@@ -9,15 +9,15 @@ type ResponseError struct {
 	Body       string
 }
 
-func (e *ResponseError) Error() string {
-	return fmt.Sprintf("status code: %d, body: %s", e.StatusCode, e.Body)
-}
-
 func NewResponseError(statusBody int, body string) *ResponseError {
 	return &ResponseError{
 		StatusCode: statusBody,
 		Body:       body,
 	}
+}
+
+func (e *ResponseError) Error() string {
+	return fmt.Sprintf("status code: %d, body: %s", e.StatusCode, e.Body)
 }
 
 func IsResponseError(err error) bool {

@@ -14,6 +14,19 @@ var (
 	ItemNotFoundError    = errors.New("item not found")
 )
 
+type Queue struct {
+	step   int
+	debug  bool
+	logger *logrus.Logger
+
+	list []interface{}
+	head int
+	tail int
+	mu   sync.RWMutex
+
+	snapshot *Snapshot
+}
+
 func NewQueue(n int) *Queue {
 	return NewQueueWithPersist(n, "")
 }
@@ -28,19 +41,6 @@ func NewQueueWithPersist(n int, path string) *Queue {
 		list:     make([]interface{}, n+1),
 		snapshot: NewSnapshot(path),
 	}
-}
-
-type Queue struct {
-	step   int
-	debug  bool
-	logger *logrus.Logger
-
-	list []interface{}
-	head int
-	tail int
-	mu   sync.RWMutex
-
-	snapshot *Snapshot
 }
 
 // 获取队列容量

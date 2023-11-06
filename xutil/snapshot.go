@@ -9,12 +9,12 @@ import (
 
 const snapshotTempExt = ".temp"
 
-func NewSnapshot(path string) *Snapshot {
-	return &Snapshot{Path: path}
-}
-
 type Snapshot struct {
 	Path string
+}
+
+func NewSnapshot(path string) *Snapshot {
+	return &Snapshot{Path: path}
 }
 
 func (s *Snapshot) Store(data interface{}) error {
