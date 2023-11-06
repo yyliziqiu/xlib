@@ -7,13 +7,13 @@ import (
 	"github.com/yyliziqiu/xlib/xutil"
 )
 
-type Api struct {
+type API struct {
 	BaseURL  string
 	TextHTTP *TextHTTP
 	JsonHTTP *JSONHTTP
 }
 
-func (a Api) URL(path string) string {
+func (a API) URL(path string) string {
 	return xutil.JoinURL(a.BaseURL, path)
 }
 
