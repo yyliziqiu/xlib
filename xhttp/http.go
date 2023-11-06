@@ -10,7 +10,7 @@ import (
 type API struct {
 	BaseURL  string
 	TextHTTP *TextHTTP
-	JsonHTTP *JSONHTTP
+	JSONHTTP *JSONHTTP
 }
 
 func (a API) URL(path string) string {
