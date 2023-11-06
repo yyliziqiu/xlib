@@ -24,13 +24,13 @@ func NewTextHTTP() *TextHTTP {
 
 func NewTextHTTPWithTimeout(d time.Duration) *TextHTTP {
 	return &TextHTTP{
-		Client: newHTTPClientWithTimeout(d),
+		Client: NewHTTPClientWithTimeout(d),
 	}
 }
 
 func NewTextHTTPWithBasicAuthAndTimeout(username string, password string, d time.Duration) *TextHTTP {
 	return &TextHTTP{
-		Client:      newHTTPClientWithTimeout(d),
+		Client:      NewHTTPClientWithTimeout(d),
 		RequestFunc: GetBasicAuthRequestFunc(username, password),
 	}
 }

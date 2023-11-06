@@ -17,9 +17,9 @@ func (a Api) URL(path string) string {
 	return xutil.JoinURL(a.BaseURL, path)
 }
 
-func newHTTPClientWithTimeout(d time.Duration) *http.Client {
+func NewHTTPClientWithTimeout(d time.Duration) *http.Client {
 	return &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: d,
 	}
 }
 

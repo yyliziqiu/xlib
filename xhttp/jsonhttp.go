@@ -25,13 +25,13 @@ func NewJSONHTTP() *JSONHTTP {
 
 func NewJSONHTTPWithTimeout(d time.Duration) *JSONHTTP {
 	return &JSONHTTP{
-		Client: newHTTPClientWithTimeout(d),
+		Client: NewHTTPClientWithTimeout(d),
 	}
 }
 
 func NewJSONHTTPWithBasicAuthAndTimeout(username string, password string, d time.Duration) *JSONHTTP {
 	return &JSONHTTP{
-		Client:      newHTTPClientWithTimeout(d),
+		Client:      NewHTTPClientWithTimeout(d),
 		RequestFunc: GetBasicAuthRequestFunc(username, password),
 	}
 }
