@@ -11,16 +11,15 @@ import (
 )
 
 type Config struct {
-	Id               string
 	Addr             string
 	ErrorLogName     string
 	AccessLogName    string
 	DisableAccessLog bool
 }
 
-func (c Config) WithDefault() Config {
-	if c.Id == "" {
-		c.Id = "api"
+func (c *Config) Default() {
+	if c.Addr == "" {
+		c.Addr = ":80"
 	}
 	if c.ErrorLogName == "" {
 		c.ErrorLogName = "http-error"
@@ -28,13 +27,10 @@ func (c Config) WithDefault() Config {
 	if c.AccessLogName == "" {
 		c.AccessLogName = "http-access"
 	}
-	return c
 }
 
-type RoutesFunc func(engine *gin.Engine)
-
-func Run(config Config, routes ...RoutesFunc) error {
-	config = config.WithDefault()
+func Run(config Config, routes ...func(engine *gin.Engine)) error {
+	config.Default()
 
 	gin.SetMode(gin.ReleaseMode)
 	gin.DisableConsoleColor()
@@ -62,7 +58,7 @@ func setGinWriter(config Config) {
 	}
 
 	gin.DefaultErrorWriter = errorLogger.Writer()
-	if accessLogger == nil {
+	if accessLogger != nil {
 		gin.DefaultWriter = accessLogger.Writer()
 	} else {
 		gin.DefaultWriter = io.Discard
@@ -71,16 +67,16 @@ func setGinWriter(config Config) {
 
 func createEngine() *gin.Engine {
 	engine := gin.New()
-	engine.NoRoute(xresponse.NotFound)
-	engine.NoMethod(xresponse.MethodNotAllowed)
+	engine.NoRoute(xresponse.AbortNotFound)
+	engine.NoMethod(xresponse.AbortMethodNotAllowed)
 	engine.Use(gin.Logger())
 	engine.Use(gin.CustomRecovery(recovery))
 	return engine
 }
 
 func recovery(ctx *gin.Context, err interface{}) {
-	errorLogger.Errorf("Panic, path: %s, error: %v", ctx.FullPath(), err)
-	xresponse.InternalServerError(ctx)
+	errorLogger.Warnf("Panic, path: %s, error: %v", ctx.FullPath(), err)
+	xresponse.AbortInternalServerError(ctx)
 }
 
 func GetErrorLogger() *logrus.Logger {

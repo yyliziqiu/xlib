@@ -4,23 +4,23 @@ import (
 	"fmt"
 )
 
-type StatusError struct {
-	Code    int
-	Message string
+type ResponseError struct {
+	StatusCode int
+	Body       string
 }
 
-func (e *StatusError) Error() string {
-	return fmt.Sprintf("status code: %d, message: %s", e.Code, e.Message)
+func (e *ResponseError) Error() string {
+	return fmt.Sprintf("status code: %d, body: %s", e.StatusCode, e.Body)
 }
 
-func NewStatusError(code int, message string) *StatusError {
-	return &StatusError{
-		Code:    code,
-		Message: message,
+func NewResponseError(statusBody int, body string) *ResponseError {
+	return &ResponseError{
+		StatusCode: statusBody,
+		Body:       body,
 	}
 }
 
-func IsStatusError(err error) bool {
-	_, ok := err.(*StatusError)
+func IsResponseError(err error) bool {
+	_, ok := err.(*ResponseError)
 	return ok
 }

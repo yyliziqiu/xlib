@@ -2,6 +2,7 @@ package xsql
 
 import (
 	"database/sql"
+	"errors"
 	"strconv"
 	"strings"
 
@@ -10,7 +11,7 @@ import (
 )
 
 func IsNoRowsError(err error) bool {
-	return err == sql.ErrNoRows
+	return errors.Is(err, sql.ErrNoRows)
 }
 
 func IsMySQLDuplicateKeyError(err error) bool {

@@ -99,7 +99,7 @@ func (h *JSONHTTP) handleResponse(res *http.Response, out interface{}) (interfac
 				return nil, fmt.Errorf("unmarshal fail response failed, %s", err)
 			}
 		}
-		return cpy, NewStatusError(res.StatusCode, string(outbs))
+		return cpy, NewResponseError(res.StatusCode, string(outbs))
 	}
 
 	return nil, nil

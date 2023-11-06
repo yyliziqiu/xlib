@@ -1,6 +1,8 @@
 package xelastic
 
 import (
+	"sync"
+
 	"github.com/olivere/elastic/v7"
 	"github.com/sirupsen/logrus"
 
@@ -8,52 +10,55 @@ import (
 )
 
 var (
-	globalLogger *logrus.Logger
+	logger     *logrus.Logger
+	loggerOnce sync.Once
+)
 
-	cfs     map[string]Config
+func SetLogger(lg *logrus.Logger) {
+	logger = lg
+}
+
+func GetLogger() *logrus.Logger {
+	if logger != nil {
+		return logger
+	}
+	loggerOnce.Do(func() {
+		if logger == nil {
+			logger = xlog.MustNewLoggerByName("es")
+		}
+	})
+	return logger
+}
+
+var (
+	configs map[string]Config
 	clients map[string]*elastic.Client
 )
 
-func SetGlobalLogger(logger *logrus.Logger) {
-	globalLogger = logger
-}
-
-func Init(configs ...Config) error {
-	cfs = make(map[string]Config, len(configs))
-	for _, config := range configs {
-		config = config.WithDefault()
-		cfs[config.Id] = config
+func Init(cfs ...Config) error {
+	configs = make(map[string]Config, len(cfs))
+	for _, config := range cfs {
+		config.Default()
+		configs[config.ID] = config
 	}
 
-	clients = make(map[string]*elastic.Client, len(cfs))
-	for _, cf := range cfs {
-		client, err := NewClient(cf)
+	clients = make(map[string]*elastic.Client, len(configs))
+	for _, config := range configs {
+		client, err := NewClient(config)
 		if err != nil {
 			Finally()
 			return err
 		}
-		clients[cf.Id] = client
+		clients[config.ID] = client
 	}
 
 	return nil
 }
 
 func NewClient(config Config) (*elastic.Client, error) {
-	var logger elastic.Logger
+	var lg elastic.Logger
 	if config.EnableLog {
-		if config.LogName != "" {
-			logger = xlog.MustNewLoggerByName(config.LogName)
-		} else {
-			if globalLogger == nil {
-				globalLogger = xlog.MustNewLoggerByName("es")
-			}
-			logger = globalLogger
-		}
-	}
-
-	var traceLogger elastic.Logger
-	if config.EnableLogTrace {
-		traceLogger = logger
+		lg = GetLogger()
 	}
 
 	return elastic.NewClient(
@@ -61,9 +66,9 @@ func NewClient(config Config) (*elastic.Client, error) {
 		elastic.SetBasicAuth(config.Username, config.Password),
 		elastic.SetSniff(false),
 		elastic.SetHealthcheck(false),
-		elastic.SetInfoLog(logger),
-		elastic.SetErrorLog(logger),
-		elastic.SetTraceLog(traceLogger),
+		elastic.SetTraceLog(lg),
+		elastic.SetInfoLog(lg),
+		elastic.SetErrorLog(lg),
 	)
 }
 
@@ -78,5 +83,5 @@ func GetClient(id string) *elastic.Client {
 }
 
 func GetDefaultClient() *elastic.Client {
-	return GetClient(DefaultId)
+	return GetClient(DefaultID)
 }

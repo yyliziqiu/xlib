@@ -4,24 +4,23 @@ import (
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 )
 
-const DefaultId = "default"
+const DefaultID = "default"
 
 var (
-	cfs     map[string]Config
+	configs map[string]Config
 	clients map[string]*oss.Client
 )
 
 type Config struct {
-	Id        string
+	ID        string
 	Endpoint  string
-	KeyId     string
+	KeyID     string
 	KeySecret string
-	Buckets   []BucketConfig
 }
 
-func (c Config) WithDefault() Config {
-	if c.Id == "" {
-		c.Id = DefaultId
+func (c Config) Default() Config {
+	if c.ID == "" {
+		c.ID = DefaultID
 	}
 	return c
 }
@@ -32,27 +31,27 @@ type BucketConfig struct {
 	Prefix string `json:"prefix"`
 }
 
-func Init(configs ...Config) error {
-	cfs = make(map[string]Config, len(configs))
-	for _, config := range configs {
-		config = config.WithDefault()
-		cfs[config.Id] = config
+func Init(cfs ...Config) error {
+	configs = make(map[string]Config, len(cfs))
+	for _, config := range cfs {
+		config.Default()
+		configs[config.ID] = config
 	}
 
-	clients = make(map[string]*oss.Client, len(cfs))
-	for _, cf := range cfs {
-		db, err := New(cf)
+	clients = make(map[string]*oss.Client, len(configs))
+	for _, config := range configs {
+		db, err := New(config)
 		if err != nil {
 			return err
 		}
-		clients[cf.Id] = db
+		clients[config.ID] = db
 	}
 
 	return nil
 }
 
 func New(config Config) (*oss.Client, error) {
-	return oss.New(config.Endpoint, config.KeyId, config.KeySecret)
+	return oss.New(config.Endpoint, config.KeyID, config.KeySecret)
 }
 
 func GetClient(id string) *oss.Client {
@@ -60,26 +59,5 @@ func GetClient(id string) *oss.Client {
 }
 
 func GetDefaultClient() *oss.Client {
-	return GetClient(DefaultId)
-}
-
-func GetBucketConfig(clientId string, bucketId string) BucketConfig {
-	def := BucketConfig{}
-
-	config, ok := cfs[clientId]
-	if !ok {
-		return def
-	}
-
-	for _, bucket := range config.Buckets {
-		if bucket.Id == bucketId {
-			return bucket
-		}
-	}
-
-	return def
-}
-
-func GetDefaultClientBucketConfig(bucketId string) BucketConfig {
-	return GetBucketConfig(DefaultId, bucketId)
+	return GetClient(DefaultID)
 }

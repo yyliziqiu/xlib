@@ -27,20 +27,33 @@ var crosHeaders = &CrosHeaders{
 }
 
 // CrosMiddleware
+//
 // 允许跨域，参考： https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers
-// Only the 7 CORS-safelisted response headers are exposed: Cache-Control, Content-Language, Content-Length, Content-Type, Expires, Last-Modified, Pragma.
-// CORS-safelisted request header is one of the following HTTP headers: Accept, Accept-Language, Content-Language, Content-Type.
-func CrosMiddleware(c *gin.Context) {
-	c.Header("Access-Control-Allow-Origin", crosHeaders.Origin)
-	c.Header("Access-Control-Expose-Headers", crosHeaders.ExposeHeaders)
-	c.Header("Access-Control-Allow-Credentials", crosHeaders.AllowCredentials)
-	if c.Request.Method == http.MethodOptions {
-		c.Header("Access-Control-Max-Age", crosHeaders.MaxAge)
-		c.Header("Access-Control-Allow-Methods", crosHeaders.AllowMethods)
-		c.Header("Access-Control-Allow-Headers", crosHeaders.AllowHeaders)
+// Only the 7 CORS-safelisted response headers are exposed:
+// Cache-Control,
+// Content-Language,
+// Content-Length,
+// Content-Type,
+// Expires,
+// Last-Modified,
+// Pragma.
+//
+// CORS-safelisted request header is one of the following HTTP headers:
+// Accept,
+// Accept-Language,
+// Content-Language,
+// Content-Type.
+func CrosMiddleware(ctx *gin.Context) {
+	ctx.Header("Access-Control-Allow-Origin", crosHeaders.Origin)
+	ctx.Header("Access-Control-Expose-Headers", crosHeaders.ExposeHeaders)
+	ctx.Header("Access-Control-Allow-Credentials", crosHeaders.AllowCredentials)
+	if ctx.Request.Method == http.MethodOptions {
+		ctx.Header("Access-Control-Max-Age", crosHeaders.MaxAge)
+		ctx.Header("Access-Control-Allow-Methods", crosHeaders.AllowMethods)
+		ctx.Header("Access-Control-Allow-Headers", crosHeaders.AllowHeaders)
 	}
 
-	if c.Request.Method == http.MethodOptions {
-		xresponse.Ok(c)
+	if ctx.Request.Method == http.MethodOptions {
+		xresponse.AbortOK(ctx)
 	}
 }

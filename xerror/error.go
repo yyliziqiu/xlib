@@ -2,20 +2,20 @@ package xerror
 
 import "fmt"
 
-func NewError(code string, message string) *Error {
-	return &Error{Code: code, Message: message}
-}
-
 type Error struct {
 	Code    string
 	Message string
 }
 
-func (e *Error) Error() string {
+func New(code string, message string) *Error {
+	return &Error{Code: code, Message: message}
+}
+
+func (e Error) Error() string {
 	return fmt.Sprintf("code: %s, message: %s", e.Code, e.Message)
 }
 
-func (e *Error) With(v interface{}) *Error {
+func (e Error) With(v interface{}) *Error {
 	err := &Error{Code: e.Code}
 	switch v.(type) {
 	case error:
@@ -28,14 +28,21 @@ func (e *Error) With(v interface{}) *Error {
 	return err
 }
 
-func (e *Error) Withf(message string, a ...interface{}) *Error {
+func (e Error) Wrap(err error) *Error {
+	return &Error{
+		Code:    e.Code,
+		Message: fmt.Sprintf("%s [%v]", e.Message, err),
+	}
+}
+
+func (e Error) Format(message string, a ...interface{}) *Error {
 	return &Error{
 		Code:    e.Code,
 		Message: fmt.Sprintf(message, a...),
 	}
 }
 
-func (e *Error) WithFields(a ...interface{}) *Error {
+func (e Error) Fields(a ...interface{}) *Error {
 	return &Error{
 		Code:    e.Code,
 		Message: fmt.Sprintf(e.Message, a...),

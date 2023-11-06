@@ -25,7 +25,7 @@ type Config struct {
 	DisableLevelRotation bool
 }
 
-func (c Config) WithDefault() Config {
+func (c *Config) Default() {
 	if c.Name == "" {
 		c.Name = "app"
 	}
@@ -50,5 +50,4 @@ func (c Config) WithDefault() Config {
 	if c.TimestampFormat == "" {
 		c.TimestampFormat = "2006-01-02 15:04:05"
 	}
-	return c
 }

@@ -26,18 +26,15 @@ var (
 
 func Init(config Config) error {
 	var err error
-
-	defaultConfig = config.WithDefault()
+	defaultConfig = config
+	defaultConfig.Default()
 
 	HTTP, err = NewLoggerByName("http")
 	if err != nil {
 		return err
 	}
 
-	Console, err = NewConsoleLogger(Config{
-		Level:        "debug",
-		EnableCaller: true,
-	})
+	Console, err = NewConsoleLogger(Config{Level: "debug", EnableCaller: true})
 	if err != nil {
 		return err
 	}
@@ -154,12 +151,12 @@ func NewFileLogger(config Config) (*logrus.Logger, error) {
 
 func getRotationHook(config Config) (*lfshook.LfsHook, error) {
 	if config.DisableLevelRotation {
-		return newTimeRotationHook(config)
+		return newRotationHookByTime(config)
 	}
-	return newTimeLevelRotationHook(config)
+	return newRotationHookByTimeAndLevel(config)
 }
 
-func newTimeRotationHook(config Config) (*lfshook.LfsHook, error) {
+func newRotationHookByTime(config Config) (*lfshook.LfsHook, error) {
 	var (
 		name         = config.Name
 		path         = config.Path
@@ -187,7 +184,7 @@ func newTimeRotationHook(config Config) (*lfshook.LfsHook, error) {
 	return lfshook.NewHook(rotation, getFormatter(config)), nil
 }
 
-func newTimeLevelRotationHook(config Config) (*lfshook.LfsHook, error) {
+func newRotationHookByTimeAndLevel(config Config) (*lfshook.LfsHook, error) {
 	var (
 		name         = config.Name
 		path         = config.Path

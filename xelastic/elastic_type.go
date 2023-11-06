@@ -1,23 +1,17 @@
 package xelastic
 
-const DefaultId = "default"
+const DefaultID = "default"
 
 type Config struct {
-	// must
-	Hosts    []string
-	Username string
-	Password string
-
-	// optional
-	Id             string
-	EnableLog      bool
-	EnableLogTrace bool
-	LogName        string
+	ID        string   // optional
+	Hosts     []string // must
+	Username  string   // must
+	Password  string   // must
+	EnableLog bool     // optional
 }
 
-func (c Config) WithDefault() Config {
-	if c.Id == "" {
-		c.Id = DefaultId
+func (c Config) Default() {
+	if c.ID == "" {
+		c.ID = DefaultID
 	}
-	return c
 }

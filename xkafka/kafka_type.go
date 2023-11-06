@@ -1,42 +1,43 @@
 package xkafka
 
 const (
-	DefaultId = "default"
+	DefaultID = "default"
 
 	RoleConsumer = "consumer"
 	RoleProducer = "producer"
 )
 
 type Config struct {
-	Id   string
-	Role string
+	ID   string // optional
+	Role string // optional, default is consumer
 
 	// common
-	BootstrapServers string
-	SecurityProtocol string
-	SaslUsername     string
-	SaslPassword     string
-	SaslMechanism    string
-	SslCaLocation    string
+	BootstrapServers string // must
+	SecurityRequired bool   // optional
+	SecurityProtocol string // optional
+	SaslUsername     string // optional
+	SaslPassword     string // optional
+	SaslMechanism    string // optional
+	SslCaLocation    string // optional
 
 	// producer
-	RequiredAcks int
-	Topic        string
+	RequiredAcks int    // optional
+	Topic        string // must
 
 	// consumer
-	Topics            []string
-	GroupId           string
-	OffsetReset       string
-	PollInterval      int
-	SessionTimeout    int
-	HeartbeatInterval int
-	FetchMax          int
-	PartitionFetchMax int
+	Topics            []string // must
+	GroupId           string   // must
+	OffsetReset       string   // optional
+	PollInterval      int      // optional
+	SessionTimeout    int      // optional
+	HeartbeatInterval int      // optional
+	FetchMax          int      // optional
+	PartitionFetchMax int      // optional
 }
 
-func (c Config) WithDefault() Config {
-	if c.Id == "" {
-		c.Id = DefaultId
+func (c *Config) Default() {
+	if c.ID == "" {
+		c.ID = DefaultID
 	}
 	if c.Role == "" {
 		c.Role = RoleConsumer
@@ -59,12 +60,4 @@ func (c Config) WithDefault() Config {
 	if c.PartitionFetchMax == 0 {
 		c.PartitionFetchMax = 512000 // 500K
 	}
-	return c
-}
-
-func (c Config) GetRole() string {
-	if c.Role == RoleProducer {
-		return RoleProducer
-	}
-	return RoleConsumer
 }

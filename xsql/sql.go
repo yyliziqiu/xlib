@@ -2,7 +2,8 @@ package xsql
 
 import (
 	"database/sql"
-	"errors"
+	"fmt"
+	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
@@ -10,48 +11,64 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/yyliziqiu/xlib/xlog"
 )
 
 var (
-	globalLogger *logrus.Logger
-
-	cfs  map[string]Config
-	sqls map[string]*sql.DB
-	orms map[string]*gorm.DB
+	logger     *logrus.Logger
+	loggerOnce sync.Once
 )
 
-func SetGlobalLogger(logger *logrus.Logger) {
-	globalLogger = logger
+func SetLogger(lg *logrus.Logger) {
+	logger = lg
 }
 
-func Init(configs ...Config) error {
-	cfs = make(map[string]Config, len(configs))
-	for _, config := range configs {
-		config = config.WithDefault()
-		cfs[config.Id] = config
+func GetLogger() *logrus.Logger {
+	if logger != nil {
+		return logger
+	}
+	loggerOnce.Do(func() {
+		if logger == nil {
+			logger = xlog.MustNewLoggerByName("es")
+		}
+	})
+	return logger
+}
+
+var (
+	configs map[string]Config
+	sqls    map[string]*sql.DB
+	orms    map[string]*gorm.DB
+)
+
+func Init(cfs ...Config) error {
+	configs = make(map[string]Config, 16)
+	for _, config := range cfs {
+		config.Default()
+		configs[config.ID] = config
 	}
 
-	sqls = make(map[string]*sql.DB, len(cfs))
-	orms = make(map[string]*gorm.DB, len(cfs))
-
-	for _, cf := range cfs {
-		db, err := NewSQL(cf)
+	sqls = make(map[string]*sql.DB, 16)
+	orms = make(map[string]*gorm.DB, 16)
+	for _, config := range configs {
+		db, err := NewSQL(config)
 		if err != nil {
 			Finally()
 			return err
 		}
-		sqls[cf.Id] = db
+		sqls[config.ID] = db
 
-		if !cf.EnableORM {
+		if !config.EnableORM {
 			continue
 		}
 
-		orm, err := NewORM(cf, db)
+		orm, err := NewORM(config, db)
 		if err != nil {
 			Finally()
 			return err
 		}
-		orms[cf.Id] = orm
+		orms[config.ID] = orm
 	}
 
 	return nil
@@ -72,9 +89,8 @@ func NewSQL(config Config) (*sql.DB, error) {
 }
 
 func NewORM(config Config, db *sql.DB) (*gorm.DB, error) {
-	var err error
-
 	if db == nil {
+		var err error
 		db, err = NewSQL(config)
 		if err != nil {
 			return nil, err
@@ -87,7 +103,7 @@ func NewORM(config Config, db *sql.DB) (*gorm.DB, error) {
 	case DBTypePostgres:
 		return gorm.Open(postgres.New(postgres.Config{Conn: db}), config.GORMConfig())
 	default:
-		return nil, errors.New("not support db type")
+		return nil, fmt.Errorf("not support db type [%s]", config.Type)
 	}
 }
 
@@ -98,11 +114,11 @@ func Finally() {
 }
 
 func GetConfig(id string) Config {
-	return cfs[id]
+	return configs[id]
 }
 
 func GetDefaultConfig() Config {
-	return GetConfig(DefaultId)
+	return GetConfig(DefaultID)
 }
 
 func GetDB(id string) *sql.DB {
@@ -110,7 +126,7 @@ func GetDB(id string) *sql.DB {
 }
 
 func GetDefaultDB() *sql.DB {
-	return GetDB(DefaultId)
+	return GetDB(DefaultID)
 }
 
 func GetORM(id string) *gorm.DB {
@@ -118,5 +134,5 @@ func GetORM(id string) *gorm.DB {
 }
 
 func GetDefaultORM() *gorm.DB {
-	return GetORM(DefaultId)
+	return GetORM(DefaultID)
 }

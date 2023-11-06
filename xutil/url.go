@@ -9,16 +9,16 @@ func JoinURL(segments ...string) string {
 		return ""
 	}
 
+	n := len(segments)
 	sb := strings.Builder{}
-	for _, segment := range segments {
-		sb.WriteString(strings.Trim(segment, "/"))
-		sb.WriteString("/")
+	for i, segment := range segments {
+		if i < n-1 {
+			sb.WriteString(strings.Trim(segment, "/"))
+			sb.WriteString("/")
+		} else {
+			sb.WriteString(strings.TrimLeft(segment, "/"))
+		}
 	}
 
-	url := sb.String()
-	if !strings.HasSuffix(segments[len(segments)-1], "/") {
-		url = url[:len(url)-1]
-	}
-
-	return url
+	return sb.String()
 }

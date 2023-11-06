@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+type Timer struct {
+	start time.Time
+	pause time.Time
+}
+
 func NewTimer() Timer {
 	return Timer{
 		start: time.Now(),
@@ -12,16 +17,11 @@ func NewTimer() Timer {
 	}
 }
 
-type Timer struct {
-	start time.Time
-	pause time.Time
-}
-
-func (t Timer) StartedAt() time.Time {
+func (t Timer) StartAt() time.Time {
 	return t.start
 }
 
-func (t Timer) PausedAt() time.Time {
+func (t Timer) PauseAt() time.Time {
 	return t.pause
 }
 
@@ -32,12 +32,20 @@ func (t Timer) Pause() time.Duration {
 }
 
 func (t Timer) Pauses() string {
-	return t.manualDuration(t.Pause())
+	return ManualDuration(t.Pause())
+}
+
+func (t Timer) Stop() time.Duration {
+	return time.Now().Sub(t.start)
+}
+
+func (t Timer) Stops() string {
+	return ManualDuration(t.Stop())
 }
 
 var timeUnit = []string{"ns", "us", "ms", "s"}
 
-func (t Timer) manualDuration(du time.Duration) string {
+func ManualDuration(du time.Duration) string {
 	d := float64(du)
 
 	i := 0
@@ -47,18 +55,6 @@ func (t Timer) manualDuration(du time.Duration) string {
 	}
 
 	return strconv.FormatFloat(d, 'f', 2, 64) + timeUnit[i]
-}
-
-func (t Timer) Stop() time.Duration {
-	return time.Now().Sub(t.start)
-}
-
-func (t Timer) Stops() string {
-	return t.manualDuration(t.Stop())
-}
-
-func (t Timer) String() string {
-	return t.Stops()
 }
 
 func Timestamp2String(ts int64) string {
@@ -73,7 +69,7 @@ func String2Timestamp(timeString string) (int64, error) {
 	return t.Unix(), nil
 }
 
-func GetStartTimestampOfDay(ts int64) int64 {
+func GetTimestampOfDay(ts int64) int64 {
 	t := time.Unix(ts, 0)
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local).Unix()
 }

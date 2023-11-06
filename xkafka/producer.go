@@ -7,18 +7,6 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func NewDefaultProducer() (*kafka.Producer, error) {
-	return NewProducerById(DefaultId)
-}
-
-func NewProducerById(id string) (*kafka.Producer, error) {
-	config, ok := cfs[id]
-	if !ok {
-		return nil, fmt.Errorf("kafka ID: %s not exist")
-	}
-	return NewProducer(config)
-}
-
 func NewProducer(config Config) (*kafka.Producer, error) {
 	conf := &kafka.ConfigMap{
 		"bootstrap.servers":     config.BootstrapServers,
@@ -27,13 +15,25 @@ func NewProducer(config Config) (*kafka.Producer, error) {
 
 	producer, err := kafka.NewProducer(conf)
 	if err != nil {
-		return nil, fmt.Errorf("create producer error: %v", err)
+		return nil, fmt.Errorf("create producer failed [%w]", err)
 	}
 
 	return producer, nil
 }
 
-func ProduceMessage(producer *kafka.Producer, topic string, message []byte) error {
+func NewProducerById(id string) (*kafka.Producer, error) {
+	config, ok := configs[id]
+	if !ok {
+		return nil, fmt.Errorf("kafka config [%s] not exist", id)
+	}
+	return NewProducer(config)
+}
+
+func NewDefaultProducer() (*kafka.Producer, error) {
+	return NewProducerById(DefaultID)
+}
+
+func Produce(producer *kafka.Producer, topic string, message []byte) error {
 	return producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Value:          message,
@@ -45,5 +45,5 @@ func ProduceObject(producer *kafka.Producer, topic string, object interface{}) e
 	if err != nil {
 		return err
 	}
-	return ProduceMessage(producer, topic, message)
+	return Produce(producer, topic, message)
 }

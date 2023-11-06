@@ -73,7 +73,7 @@ func (h *TextHTTP) handleResponse(res *http.Response) ([]byte, error) {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return outbs, NewStatusError(res.StatusCode, string(outbs))
+		return outbs, NewResponseError(res.StatusCode, string(outbs))
 	}
 
 	return outbs, nil

@@ -9,87 +9,96 @@ import (
 )
 
 var (
-	BadRequestError          = &xerror.Error{Code: "A0400", Message: "Bad Request"}
-	UnauthorizedError        = &xerror.Error{Code: "A0401", Message: "Unauthorized"}
-	ForbiddenError           = &xerror.Error{Code: "A0403", Message: "Forbidden"}
-	NotFoundError            = &xerror.Error{Code: "A0404", Message: "Not Found"}
-	MethodNotAllowedError    = &xerror.Error{Code: "A0405", Message: "Method Not Allowed"}
-	InternalServerErrorError = &xerror.Error{Code: "B0500", Message: "Internal Server Error"}
+	BadRequestError          = xerror.New("A0400", "Bad Request")
+	UnauthorizedError        = xerror.New("A0401", "Unauthorized")
+	ForbiddenError           = xerror.New("A0403", "Forbidden")
+	NotFoundError            = xerror.New("A0404", "Not Found")
+	MethodNotAllowedError    = xerror.New("A0405", "Method Not Allowed")
+	InternalServerErrorError = xerror.New("B0500", "Internal Server Error")
 )
 
-func newErrorResponse(err *xerror.Error) errorResponse {
-	return errorResponse{Code: err.Code, Message: err.Message}
-}
-
-type errorResponse struct {
+type responseError struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 }
 
-func buildErrorResponse(err error) (statusCode int, res errorResponse) {
+func newResponseError(err *xerror.Error) responseError {
+	return responseError{
+		Code:    err.Code,
+		Message: err.Message,
+	}
+}
+
+func buildErrorResponse(err error) (int, responseError) {
 	e, ok := err.(*xerror.Error)
 	if !ok {
 		e = BadRequestError
 	}
 
-	switch e.Code[0] {
-	case 'A':
-		statusCode = http.StatusBadRequest
-	case 'B':
+	statusCode := http.StatusBadRequest
+	if e.Code[0] != 'A' {
 		statusCode = http.StatusInternalServerError
-	case 'C', 'D':
-		statusCode = http.StatusServiceUnavailable
-	default:
-		statusCode = http.StatusBadRequest
 	}
 
-	return statusCode, newErrorResponse(e)
+	return statusCode, newResponseError(e)
 }
 
-func Ok(c *gin.Context) {
-	c.String(http.StatusOK, "")
+func OK(ctx *gin.Context) {
+	ctx.String(http.StatusOK, "")
 }
 
-func Result(c *gin.Context, data interface{}) {
-	c.JSON(http.StatusOK, data)
+func Result(ctx *gin.Context, data interface{}) {
+	ctx.JSON(http.StatusOK, data)
 }
 
-func Abort(c *gin.Context, err error) {
-	sc, er := buildErrorResponse(err)
-	c.AbortWithStatusJSON(sc, er)
+func Error(ctx *gin.Context, err error) {
+	statusCode, responseErr := buildErrorResponse(err)
+	ctx.JSON(statusCode, responseErr)
 }
 
-func AbortString(c *gin.Context, message string) {
-	sc, er := buildErrorResponse(BadRequestError.With(message))
-	c.AbortWithStatusJSON(sc, er)
+func ErrorString(ctx *gin.Context, message string) {
+	statusCode, responseErr := buildErrorResponse(BadRequestError.With(message))
+	ctx.JSON(statusCode, responseErr)
 }
 
-func Fail(c *gin.Context, err error) {
-	sc, er := buildErrorResponse(err)
-	c.JSON(sc, er)
+func AbortOK(ctx *gin.Context) {
+	ctx.AbortWithStatus(http.StatusOK)
 }
 
-func FailString(c *gin.Context, message string) {
-	sc, er := buildErrorResponse(BadRequestError.With(message))
-	c.JSON(sc, er)
+func AbortResult(ctx *gin.Context, data interface{}) {
+	ctx.AbortWithStatusJSON(http.StatusOK, data)
 }
 
-func Unauthorized(c *gin.Context) {
-	c.JSON(http.StatusUnauthorized, newErrorResponse(UnauthorizedError))
+func AbortError(ctx *gin.Context, err error) {
+	statusCode, responseErr := buildErrorResponse(err)
+	ctx.AbortWithStatusJSON(statusCode, responseErr)
 }
 
-func Forbidden(c *gin.Context) {
-	c.JSON(http.StatusForbidden, newErrorResponse(ForbiddenError))
+func AbortErrorString(ctx *gin.Context, message string) {
+	statusCode, responseErr := buildErrorResponse(BadRequestError.With(message))
+	ctx.AbortWithStatusJSON(statusCode, responseErr)
 }
 
-func NotFound(c *gin.Context) {
-	c.JSON(http.StatusNotFound, newErrorResponse(NotFoundError))
+func AbortBadRequest(ctx *gin.Context) {
+	ctx.AbortWithStatusJSON(http.StatusBadRequest, newResponseError(BadRequestError))
 }
 
-func MethodNotAllowed(c *gin.Context) {
-	c.JSON(http.StatusMethodNotAllowed, newErrorResponse(MethodNotAllowedError))
+func AbortUnauthorized(ctx *gin.Context) {
+	ctx.AbortWithStatusJSON(http.StatusUnauthorized, newResponseError(UnauthorizedError))
 }
 
-func InternalServerError(c *gin.Context) {
-	c.JSON(http.StatusInternalServerError, newErrorResponse(InternalServerErrorError))
+func AbortForbidden(ctx *gin.Context) {
+	ctx.AbortWithStatusJSON(http.StatusForbidden, newResponseError(ForbiddenError))
+}
+
+func AbortNotFound(ctx *gin.Context) {
+	ctx.AbortWithStatusJSON(http.StatusNotFound, newResponseError(NotFoundError))
+}
+
+func AbortMethodNotAllowed(ctx *gin.Context) {
+	ctx.AbortWithStatusJSON(http.StatusMethodNotAllowed, newResponseError(MethodNotAllowedError))
+}
+
+func AbortInternalServerError(ctx *gin.Context) {
+	ctx.AbortWithStatusJSON(http.StatusInternalServerError, newResponseError(InternalServerErrorError))
 }

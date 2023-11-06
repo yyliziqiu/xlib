@@ -5,31 +5,31 @@ import (
 )
 
 var (
-	cfs      map[string]Config
+	configs  map[string]Config
 	clients  map[string]*redis.Client
 	clusters map[string]*redis.ClusterClient
 )
 
-func Init(configs ...Config) error {
-	cfs = make(map[string]Config, len(configs))
-	for _, config := range configs {
-		config = config.WithDefault()
-		cfs[config.Id] = config
+func Init(cfs ...Config) error {
+	configs = make(map[string]Config, 16)
+	for _, config := range cfs {
+		config.Default()
+		configs[config.ID] = config
 	}
 
-	clients = make(map[string]*redis.Client, len(cfs))
-	clusters = make(map[string]*redis.ClusterClient, len(cfs))
-	for _, cf := range cfs {
-		cli, clu, err := New(cf)
+	clients = make(map[string]*redis.Client, 16)
+	clusters = make(map[string]*redis.ClusterClient, 16)
+	for _, config := range configs {
+		cli, clu, err := New(config)
 		if err != nil {
 			Finally()
 			return err
 		}
 		if cli != nil {
-			clients[cf.Id] = cli
+			clients[config.ID] = cli
 		}
 		if clu != nil {
-			clusters[cf.Id] = clu
+			clusters[config.ID] = clu
 		}
 	}
 
@@ -173,7 +173,7 @@ func GetCli(id string) *redis.Client {
 }
 
 func GetDefaultCli() *redis.Client {
-	return GetCli(DefaultId)
+	return GetCli(DefaultID)
 }
 
 func GetClu(id string) *redis.ClusterClient {
@@ -181,5 +181,5 @@ func GetClu(id string) *redis.ClusterClient {
 }
 
 func GetDefaultClu() *redis.ClusterClient {
-	return GetClu(DefaultId)
+	return GetClu(DefaultID)
 }

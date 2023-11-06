@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	DefaultId = "default"
+	DefaultID = "default"
 
 	ModeSingle          = "single"
 	ModeCluster         = "cluster"
@@ -19,41 +19,41 @@ var (
 )
 
 type Config struct {
-	Id   string `json:"id"`
-	Mode string `json:"mode"`
+	ID   string // optional
+	Mode string // must
 
 	// 单机模式
-	Addr string `json:"addr"`
-	DB   int    `json:"DB"`
+	Addr string // must
+	DB   int    // optional
 
 	// 集群模式
-	Addrs          []string `json:"addrs"`
-	ReadPreference string   `json:"readPreference"`
+	Addrs          []string // must
+	ReadPreference string   // must
 
 	// 哨兵模式
-	MasterName       string   `json:"masterName"`
-	SentinelAddrs    []string `json:"sentinelAddrs"`
-	SentinelPassword string   `json:"sentinelPassword"`
-	// DB int
-	// ReadPreference string
+	MasterName       string   // must
+	SentinelAddrs    []string // must
+	SentinelPassword string   // optional
+	// DB int // optional
+	// ReadPreference string // optional
 
-	Username           string        `json:"username"`
-	Password           string        `json:"password"`
-	MaxRetries         int           `json:"maxRetries"`
-	DialTimeout        time.Duration `json:"dialTimeout"`
-	ReadTimeout        time.Duration `json:"readTimeout"`
-	WriteTimeout       time.Duration `json:"writeTimeout"`
-	PoolSize           int           `json:"poolSize"`
-	MinIdleConns       int           `json:"minIdleConns"`
-	MaxConnAge         time.Duration `json:"maxConnAge"`
-	PoolTimeout        time.Duration `json:"poolTimeout"`
-	IdleTimeout        time.Duration `json:"idleTimeout"`
-	IdleCheckFrequency time.Duration `json:"idleCheckFrequency"`
+	Username           string        // optional
+	Password           string        // optional
+	MaxRetries         int           // optional
+	DialTimeout        time.Duration // optional
+	ReadTimeout        time.Duration // optional
+	WriteTimeout       time.Duration // optional
+	PoolSize           int           // optional
+	MinIdleConns       int           // optional
+	MaxConnAge         time.Duration // optional
+	PoolTimeout        time.Duration // optional
+	IdleTimeout        time.Duration // optional
+	IdleCheckFrequency time.Duration // optional
 }
 
-func (c Config) WithDefault() Config {
-	if c.Id == "" {
-		c.Id = DefaultId
+func (c *Config) Default() {
+	if c.ID == "" {
+		c.ID = DefaultID
 	}
 	if c.MaxRetries == 0 {
 		c.MaxRetries = 3
@@ -85,5 +85,4 @@ func (c Config) WithDefault() Config {
 	if c.IdleCheckFrequency == 0 {
 		c.IdleCheckFrequency = 30 * time.Second
 	}
-	return c
 }

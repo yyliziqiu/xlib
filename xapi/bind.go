@@ -7,25 +7,19 @@ import (
 	"github.com/yyliziqiu/xlib/xerror"
 )
 
-var ParamError = xerror.NewError("A1000", "param error")
+var ParamError = xerror.New("A1000", "param error")
 
-// BindForm 参数发生错误时，响应简单的错误信息
-func BindForm(ctx *gin.Context, form interface{}) bool {
+func BindForm(ctx *gin.Context, form interface{}, verbose bool) bool {
 	err := ctx.ShouldBind(form)
 	if err != nil {
-		errorLogger.Warnf("Bind error, path: %s, form: %v, err: %v.", ctx.FullPath(), form, err)
-		xresponse.Fail(ctx, ParamError)
-		return false
-	}
-	return true
-}
-
-// BindFormVerbose 参数发生错误时，响应详细的错误信息
-func BindFormVerbose(ctx *gin.Context, form interface{}) bool {
-	err := ctx.ShouldBind(form)
-	if err != nil {
-		errorLogger.Warnf("Bind error, path: %s, form: %v, err: %v.", ctx.FullPath(), form, err)
-		xresponse.Fail(ctx, ParamError.With(err))
+		if errorLogger != nil {
+			errorLogger.Warnf("Bind error, path: %s, form: %v, err: %v.", ctx.FullPath(), form, err)
+		}
+		if verbose {
+			xresponse.Error(ctx, ParamError.Wrap(err))
+		} else {
+			xresponse.Error(ctx, ParamError)
+		}
 		return false
 	}
 	return true

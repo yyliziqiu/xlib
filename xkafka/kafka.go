@@ -1,20 +1,22 @@
 package xkafka
 
 import (
+	"errors"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 var (
-	cfs       map[string]Config
+	configs   map[string]Config
 	consumers map[string]*kafka.Consumer
 	producers map[string]*kafka.Producer
 )
 
-func Init(autoNew bool, configs ...Config) error {
-	cfs = make(map[string]Config, len(configs))
-	for _, config := range configs {
-		config = config.WithDefault()
-		cfs[config.Id] = config
+func Init(autoNew bool, cfs ...Config) error {
+	configs = make(map[string]Config, len(cfs))
+	for _, config := range cfs {
+		config.Default()
+		configs[config.ID] = config
 	}
 
 	if !autoNew {
@@ -23,22 +25,24 @@ func Init(autoNew bool, configs ...Config) error {
 
 	consumers = make(map[string]*kafka.Consumer, 8)
 	producers = make(map[string]*kafka.Producer, 8)
-	for _, cf := range cfs {
-		switch cf.GetRole() {
+	for _, config := range configs {
+		switch config.Role {
 		case RoleConsumer:
-			consumer, err := NewConsumer(cf)
+			consumer, err := NewConsumer(config)
 			if err != nil {
 				Finally()
 				return err
 			}
-			consumers[cf.Id] = consumer
+			consumers[config.ID] = consumer
 		case RoleProducer:
-			producer, err := NewProducer(cf)
+			producer, err := NewProducer(config)
 			if err != nil {
 				Finally()
 				return err
 			}
-			producers[cf.Id] = producer
+			producers[config.ID] = producer
+		default:
+			return errors.New("not support kafka role")
 		}
 	}
 
@@ -54,34 +58,34 @@ func Finally() {
 	}
 }
 
-func GetDefaultConfig() Config {
-	return GetConfig(DefaultId)
-}
-
 func GetConfig(id string) Config {
-	return cfs[id]
+	return configs[id]
 }
 
-func GetDefaultTopic() string {
-	return GetTopic(DefaultId)
+func GetDefaultConfig() Config {
+	return GetConfig(DefaultID)
 }
 
 func GetTopic(id string) string {
-	return cfs[id].Topic
+	return configs[id].Topic
 }
 
-func GetDefaultConsumer() *kafka.Consumer {
-	return GetConsumer(DefaultId)
+func GetDefaultTopic() string {
+	return GetTopic(DefaultID)
 }
 
 func GetConsumer(id string) *kafka.Consumer {
 	return consumers[id]
 }
 
-func GetDefaultProducer() *kafka.Producer {
-	return GetProducer(DefaultId)
+func GetDefaultConsumer() *kafka.Consumer {
+	return GetConsumer(DefaultID)
 }
 
 func GetProducer(id string) *kafka.Producer {
 	return producers[id]
+}
+
+func GetDefaultProducer() *kafka.Producer {
+	return GetProducer(DefaultID)
 }
