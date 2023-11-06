@@ -36,13 +36,13 @@ var (
 )
 
 func Init(cfs ...Config) error {
-	configs = make(map[string]Config, len(cfs))
+	configs = make(map[string]Config, 16)
 	for _, config := range cfs {
 		config.Default()
 		configs[config.ID] = config
 	}
 
-	clients = make(map[string]*elastic.Client, len(configs))
+	clients = make(map[string]*elastic.Client, 16)
 	for _, config := range configs {
 		client, err := NewClient(config)
 		if err != nil {
