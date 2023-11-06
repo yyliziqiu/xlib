@@ -8,12 +8,32 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type JSONHTTP struct {
 	Client      *http.Client
 	ErrorStruct interface{} // must not point
 	RequestFunc func(req *http.Request)
+}
+
+func NewJSONHTTP() *JSONHTTP {
+	return &JSONHTTP{
+		Client: http.DefaultClient,
+	}
+}
+
+func NewJSONHTTPWithTimeout(d time.Duration) *JSONHTTP {
+	return &JSONHTTP{
+		Client: newHTTPClientWithTimeout(d),
+	}
+}
+
+func NewJSONHTTPWithBasicAuthAndTimeout(username string, password string, d time.Duration) *JSONHTTP {
+	return &JSONHTTP{
+		Client:      newHTTPClientWithTimeout(d),
+		RequestFunc: GetBasicAuthRequestFunc(username, password),
+	}
 }
 
 func (h *JSONHTTP) Get(rawURL string, header http.Header, query url.Values, out interface{}) (interface{}, error) {

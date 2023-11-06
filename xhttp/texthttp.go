@@ -8,11 +8,31 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type TextHTTP struct {
 	Client      *http.Client
 	RequestFunc func(req *http.Request)
+}
+
+func NewTextHTTP() *TextHTTP {
+	return &TextHTTP{
+		Client: http.DefaultClient,
+	}
+}
+
+func NewTextHTTPWithTimeout(d time.Duration) *TextHTTP {
+	return &TextHTTP{
+		Client: newHTTPClientWithTimeout(d),
+	}
+}
+
+func NewTextHTTPWithBasicAuthAndTimeout(username string, password string, d time.Duration) *TextHTTP {
+	return &TextHTTP{
+		Client:      newHTTPClientWithTimeout(d),
+		RequestFunc: GetBasicAuthRequestFunc(username, password),
+	}
 }
 
 func (h *TextHTTP) Get(rawURL string, header http.Header, query url.Values) ([]byte, error) {
