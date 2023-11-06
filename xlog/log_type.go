@@ -12,17 +12,17 @@ const (
 )
 
 type Config struct {
-	Console              bool
-	Name                 string
-	Path                 string
-	Level                string
-	MaxAge               time.Duration
-	RotationTime         time.Duration
-	Formatter            string
-	EnableCaller         bool
-	CallerFields         string
-	TimestampFormat      string
-	DisableLevelRotation bool
+	Console         bool
+	Name            string
+	Path            string
+	Level           string
+	MaxAge          time.Duration
+	RotationTime    time.Duration
+	RotationLevel   int
+	Formatter       string
+	EnableCaller    bool
+	CallerFields    string
+	TimestampFormat string
 }
 
 func (c *Config) Default() {

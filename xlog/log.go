@@ -1,10 +1,12 @@
 package xlog
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	rotate "github.com/lestrrat/go-file-rotatelogs"
@@ -150,13 +152,19 @@ func NewFileLogger(config Config) (*logrus.Logger, error) {
 }
 
 func getRotationHook(config Config) (*lfshook.LfsHook, error) {
-	if config.DisableLevelRotation {
-		return newRotationHookByTime(config)
+	switch config.RotationLevel {
+	case 0:
+		return newRotationHook0(config)
+	case 1:
+		return newRotationHook1(config)
+	case 2:
+		return newRotationHook2(config)
+	default:
+		return nil, errors.New("not support rotation level")
 	}
-	return newRotationHookByTimeAndLevel(config)
 }
 
-func newRotationHookByTime(config Config) (*lfshook.LfsHook, error) {
+func newRotationHook0(config Config) (*lfshook.LfsHook, error) {
 	var (
 		name         = config.Name
 		path         = config.Path
@@ -171,12 +179,12 @@ func newRotationHookByTime(config Config) (*lfshook.LfsHook, error) {
 	}
 
 	// 美化日志文件名
-	if name != "" {
+	if !strings.HasSuffix(name, "-") {
 		name = name + "-"
 	}
 
 	// 创建分割器
-	rotation, err := NewRotation(path, name+"-%Y%m%d.log", maxAge, rotationTime)
+	rotation, err := NewRotation(path, name+"%Y%m%d.log", maxAge, rotationTime)
 	if err != nil {
 		return nil, fmt.Errorf("create rotate error [%v]", err)
 	}
@@ -184,7 +192,7 @@ func newRotationHookByTime(config Config) (*lfshook.LfsHook, error) {
 	return lfshook.NewHook(rotation, getFormatter(config)), nil
 }
 
-func newRotationHookByTimeAndLevel(config Config) (*lfshook.LfsHook, error) {
+func newRotationHook1(config Config) (*lfshook.LfsHook, error) {
 	var (
 		name         = config.Name
 		path         = config.Path
@@ -199,7 +207,46 @@ func newRotationHookByTimeAndLevel(config Config) (*lfshook.LfsHook, error) {
 	}
 
 	// 美化日志文件名
-	if name != "" {
+	if !strings.HasSuffix(name, "-") {
+		name = name + "-"
+	}
+
+	// 创建分割器
+	rotation, err := NewRotation(path, name+"%Y%m%d.log", maxAge, rotationTime)
+	if err != nil {
+		return nil, fmt.Errorf("create rotate error [%v]", err)
+	}
+	errorRotation, err := NewRotation(path, name+"error-%Y%m%d.log", maxAge, rotationTime)
+	if err != nil {
+		return nil, fmt.Errorf("create rotate error [%v]", err)
+	}
+
+	return lfshook.NewHook(lfshook.WriterMap{
+		logrus.DebugLevel: rotation,
+		logrus.InfoLevel:  rotation,
+		logrus.WarnLevel:  rotation,
+		logrus.ErrorLevel: errorRotation,
+		logrus.FatalLevel: errorRotation,
+		logrus.PanicLevel: errorRotation,
+	}, getFormatter(config)), nil
+}
+
+func newRotationHook2(config Config) (*lfshook.LfsHook, error) {
+	var (
+		name         = config.Name
+		path         = config.Path
+		maxAge       = config.MaxAge
+		rotationTime = config.RotationTime
+	)
+
+	// 确保日志目录存在
+	err := xutil.MkdirIfNotExist(config.Path)
+	if err != nil {
+		return nil, fmt.Errorf("create log dir error [%v]", err)
+	}
+
+	// 美化日志文件名
+	if !strings.HasSuffix(name, "-") {
 		name = name + "-"
 	}
 
