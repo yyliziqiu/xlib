@@ -8,14 +8,14 @@ import (
 )
 
 const (
-	DefaultID = "default"
+	DefaultId = "default"
 
 	DBTypeMySQL    = "mysql"
 	DBTypePostgres = "postgres"
 )
 
 type Config struct {
-	ID              string        // optional
+	Id              string        // optional
 	Type            string        // optional
 	DSN             string        // must
 	MaxOpenConns    int           // optional
@@ -33,8 +33,8 @@ type Config struct {
 }
 
 func (c *Config) Default() {
-	if c.ID == "" {
-		c.ID = DefaultID
+	if c.Id == "" {
+		c.Id = DefaultId
 	}
 	if c.Type == "" {
 		c.Type = DBTypeMySQL

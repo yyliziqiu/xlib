@@ -46,7 +46,7 @@ func Init(cfs ...Config) error {
 	configs = make(map[string]Config, 16)
 	for _, config := range cfs {
 		config.Default()
-		configs[config.ID] = config
+		configs[config.Id] = config
 	}
 
 	sqls = make(map[string]*sql.DB, 16)
@@ -57,7 +57,7 @@ func Init(cfs ...Config) error {
 			Finally()
 			return err
 		}
-		sqls[config.ID] = db
+		sqls[config.Id] = db
 
 		if !config.EnableORM {
 			continue
@@ -68,7 +68,7 @@ func Init(cfs ...Config) error {
 			Finally()
 			return err
 		}
-		orms[config.ID] = orm
+		orms[config.Id] = orm
 	}
 
 	return nil
@@ -118,7 +118,7 @@ func GetConfig(id string) Config {
 }
 
 func GetDefaultConfig() Config {
-	return GetConfig(DefaultID)
+	return GetConfig(DefaultId)
 }
 
 func GetDB(id string) *sql.DB {
@@ -126,7 +126,7 @@ func GetDB(id string) *sql.DB {
 }
 
 func GetDefaultDB() *sql.DB {
-	return GetDB(DefaultID)
+	return GetDB(DefaultId)
 }
 
 func GetORM(id string) *gorm.DB {
@@ -134,5 +134,5 @@ func GetORM(id string) *gorm.DB {
 }
 
 func GetDefaultORM() *gorm.DB {
-	return GetORM(DefaultID)
+	return GetORM(DefaultId)
 }

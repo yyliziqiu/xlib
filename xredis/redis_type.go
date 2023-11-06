@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	DefaultID = "default"
+	DefaultId = "default"
 
 	ModeSingle          = "single"
 	ModeCluster         = "cluster"
@@ -14,7 +14,7 @@ const (
 )
 
 type Config struct {
-	ID   string // optional
+	Id   string // optional
 	Mode string // must
 
 	// 单机模式
@@ -47,8 +47,8 @@ type Config struct {
 }
 
 func (c *Config) Default() {
-	if c.ID == "" {
-		c.ID = DefaultID
+	if c.Id == "" {
+		c.Id = DefaultId
 	}
 	if c.MaxRetries == 0 {
 		c.MaxRetries = 3

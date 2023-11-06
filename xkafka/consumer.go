@@ -58,7 +58,7 @@ func NewConsumerByConfigId(id string) (*kafka.Consumer, error) {
 }
 
 func NewDefaultConsumer() (*kafka.Consumer, error) {
-	return NewConsumerByConfigId(DefaultID)
+	return NewConsumerByConfigId(DefaultId)
 }
 
 // func consume(consumer *kafka.Consumer) {

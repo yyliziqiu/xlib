@@ -30,7 +30,7 @@ func NewProducerById(id string) (*kafka.Producer, error) {
 }
 
 func NewDefaultProducer() (*kafka.Producer, error) {
-	return NewProducerById(DefaultID)
+	return NewProducerById(DefaultId)
 }
 
 func Produce(producer *kafka.Producer, topic string, message []byte) error {

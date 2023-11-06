@@ -1,14 +1,14 @@
 package xkafka
 
 const (
-	DefaultID = "default"
+	DefaultId = "default"
 
 	RoleConsumer = "consumer"
 	RoleProducer = "producer"
 )
 
 type Config struct {
-	ID   string // optional
+	Id   string // optional
 	Role string // optional, default is consumer
 
 	// common
@@ -36,8 +36,8 @@ type Config struct {
 }
 
 func (c *Config) Default() {
-	if c.ID == "" {
-		c.ID = DefaultID
+	if c.Id == "" {
+		c.Id = DefaultId
 	}
 	if c.Role == "" {
 		c.Role = RoleConsumer

@@ -4,7 +4,7 @@ import (
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 )
 
-const DefaultID = "default"
+const DefaultId = "default"
 
 var (
 	configs map[string]Config
@@ -12,15 +12,15 @@ var (
 )
 
 type Config struct {
-	ID        string
+	Id        string
 	Endpoint  string
-	KeyID     string
+	KeyId     string
 	KeySecret string
 }
 
 func (c *Config) Default() {
-	if c.ID == "" {
-		c.ID = DefaultID
+	if c.Id == "" {
+		c.Id = DefaultId
 	}
 }
 
@@ -34,7 +34,7 @@ func Init(cfs ...Config) error {
 	configs = make(map[string]Config, 16)
 	for _, config := range cfs {
 		config.Default()
-		configs[config.ID] = config
+		configs[config.Id] = config
 	}
 
 	clients = make(map[string]*oss.Client, 16)
@@ -43,14 +43,14 @@ func Init(cfs ...Config) error {
 		if err != nil {
 			return err
 		}
-		clients[config.ID] = db
+		clients[config.Id] = db
 	}
 
 	return nil
 }
 
 func New(config Config) (*oss.Client, error) {
-	return oss.New(config.Endpoint, config.KeyID, config.KeySecret)
+	return oss.New(config.Endpoint, config.KeyId, config.KeySecret)
 }
 
 func GetClient(id string) *oss.Client {
@@ -58,5 +58,5 @@ func GetClient(id string) *oss.Client {
 }
 
 func GetDefaultClient() *oss.Client {
-	return GetClient(DefaultID)
+	return GetClient(DefaultId)
 }

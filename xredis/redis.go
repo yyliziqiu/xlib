@@ -16,7 +16,7 @@ func Init(cfs ...Config) error {
 	configs = make(map[string]Config, 16)
 	for _, config := range cfs {
 		config.Default()
-		configs[config.ID] = config
+		configs[config.Id] = config
 	}
 
 	clients = make(map[string]*redis.Client, 16)
@@ -28,10 +28,10 @@ func Init(cfs ...Config) error {
 			return err
 		}
 		if cli != nil {
-			clients[config.ID] = cli
+			clients[config.Id] = cli
 		}
 		if clu != nil {
-			clusters[config.ID] = clu
+			clusters[config.Id] = clu
 		}
 	}
 
@@ -175,7 +175,7 @@ func GetCli(id string) *redis.Client {
 }
 
 func GetDefaultCli() *redis.Client {
-	return GetCli(DefaultID)
+	return GetCli(DefaultId)
 }
 
 func GetClu(id string) *redis.ClusterClient {
@@ -183,5 +183,5 @@ func GetClu(id string) *redis.ClusterClient {
 }
 
 func GetDefaultClu() *redis.ClusterClient {
-	return GetClu(DefaultID)
+	return GetClu(DefaultId)
 }

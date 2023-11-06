@@ -1,9 +1,9 @@
 package xelastic
 
-const DefaultID = "default"
+const DefaultId = "default"
 
 type Config struct {
-	ID        string   // optional
+	Id        string   // optional
 	Hosts     []string // must
 	Username  string   // must
 	Password  string   // must
@@ -11,7 +11,7 @@ type Config struct {
 }
 
 func (c *Config) Default() {
-	if c.ID == "" {
-		c.ID = DefaultID
+	if c.Id == "" {
+		c.Id = DefaultId
 	}
 }

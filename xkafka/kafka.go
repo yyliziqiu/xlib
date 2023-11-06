@@ -16,7 +16,7 @@ func Init(autoNew bool, cfs ...Config) error {
 	configs = make(map[string]Config, 16)
 	for _, config := range cfs {
 		config.Default()
-		configs[config.ID] = config
+		configs[config.Id] = config
 	}
 
 	if !autoNew {
@@ -33,14 +33,14 @@ func Init(autoNew bool, cfs ...Config) error {
 				Finally()
 				return err
 			}
-			consumers[config.ID] = consumer
+			consumers[config.Id] = consumer
 		case RoleProducer:
 			producer, err := NewProducer(config)
 			if err != nil {
 				Finally()
 				return err
 			}
-			producers[config.ID] = producer
+			producers[config.Id] = producer
 		default:
 			return errors.New("not support kafka role")
 		}
@@ -63,7 +63,7 @@ func GetConfig(id string) Config {
 }
 
 func GetDefaultConfig() Config {
-	return GetConfig(DefaultID)
+	return GetConfig(DefaultId)
 }
 
 func GetTopic(id string) string {
@@ -71,7 +71,7 @@ func GetTopic(id string) string {
 }
 
 func GetDefaultTopic() string {
-	return GetTopic(DefaultID)
+	return GetTopic(DefaultId)
 }
 
 func GetConsumer(id string) *kafka.Consumer {
@@ -79,7 +79,7 @@ func GetConsumer(id string) *kafka.Consumer {
 }
 
 func GetDefaultConsumer() *kafka.Consumer {
-	return GetConsumer(DefaultID)
+	return GetConsumer(DefaultId)
 }
 
 func GetProducer(id string) *kafka.Producer {
@@ -87,5 +87,5 @@ func GetProducer(id string) *kafka.Producer {
 }
 
 func GetDefaultProducer() *kafka.Producer {
-	return GetProducer(DefaultID)
+	return GetProducer(DefaultId)
 }

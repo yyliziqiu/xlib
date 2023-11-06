@@ -39,7 +39,7 @@ func Init(cfs ...Config) error {
 	configs = make(map[string]Config, 16)
 	for _, config := range cfs {
 		config.Default()
-		configs[config.ID] = config
+		configs[config.Id] = config
 	}
 
 	clients = make(map[string]*elastic.Client, 16)
@@ -49,7 +49,7 @@ func Init(cfs ...Config) error {
 			Finally()
 			return err
 		}
-		clients[config.ID] = client
+		clients[config.Id] = client
 	}
 
 	return nil
@@ -83,5 +83,5 @@ func GetClient(id string) *elastic.Client {
 }
 
 func GetDefaultClient() *elastic.Client {
-	return GetClient(DefaultID)
+	return GetClient(DefaultId)
 }
