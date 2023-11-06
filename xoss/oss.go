@@ -18,11 +18,10 @@ type Config struct {
 	KeySecret string
 }
 
-func (c Config) Default() Config {
+func (c *Config) Default() {
 	if c.ID == "" {
 		c.ID = DefaultID
 	}
-	return c
 }
 
 type BucketConfig struct {
@@ -32,13 +31,13 @@ type BucketConfig struct {
 }
 
 func Init(cfs ...Config) error {
-	configs = make(map[string]Config, len(cfs))
+	configs = make(map[string]Config, 16)
 	for _, config := range cfs {
 		config.Default()
 		configs[config.ID] = config
 	}
 
-	clients = make(map[string]*oss.Client, len(configs))
+	clients = make(map[string]*oss.Client, 16)
 	for _, config := range configs {
 		db, err := New(config)
 		if err != nil {

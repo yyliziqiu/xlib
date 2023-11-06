@@ -1,6 +1,8 @@
 package xredis
 
 import (
+	"fmt"
+
 	"github.com/go-redis/redis/v8"
 )
 
@@ -47,7 +49,7 @@ func New(config Config) (*redis.Client, *redis.ClusterClient, error) {
 	case ModeSentinelCluster:
 		return nil, NewFailoverClusterClient(config), nil
 	default:
-		return nil, nil, ErrNotSupportMode
+		return nil, nil, fmt.Errorf("not support redis mode [%s]", config.Mode)
 	}
 }
 

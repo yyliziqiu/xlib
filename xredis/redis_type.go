@@ -1,7 +1,6 @@
 package xredis
 
 import (
-	"errors"
 	"time"
 )
 
@@ -12,10 +11,6 @@ const (
 	ModeCluster         = "cluster"
 	ModeSentinel        = "sentinel"
 	ModeSentinelCluster = "sentinel-cluster"
-)
-
-var (
-	ErrNotSupportMode = errors.New("not support redis mode")
 )
 
 type Config struct {

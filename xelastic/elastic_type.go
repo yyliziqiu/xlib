@@ -10,7 +10,7 @@ type Config struct {
 	EnableLog bool     // optional
 }
 
-func (c Config) Default() {
+func (c *Config) Default() {
 	if c.ID == "" {
 		c.ID = DefaultID
 	}

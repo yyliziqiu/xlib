@@ -13,7 +13,7 @@ var (
 )
 
 func Init(autoNew bool, cfs ...Config) error {
-	configs = make(map[string]Config, len(cfs))
+	configs = make(map[string]Config, 16)
 	for _, config := range cfs {
 		config.Default()
 		configs[config.ID] = config
@@ -23,8 +23,8 @@ func Init(autoNew bool, cfs ...Config) error {
 		return nil
 	}
 
-	consumers = make(map[string]*kafka.Consumer, 8)
-	producers = make(map[string]*kafka.Producer, 8)
+	consumers = make(map[string]*kafka.Consumer, 16)
+	producers = make(map[string]*kafka.Producer, 16)
 	for _, config := range configs {
 		switch config.Role {
 		case RoleConsumer:
