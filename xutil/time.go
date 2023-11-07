@@ -73,3 +73,13 @@ func GetTimestampOfDay(ts int64) int64 {
 	t := time.Unix(ts, 0)
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local).Unix()
 }
+
+func GetTimestampOfMonth(ts int64) int64 {
+	t := time.Unix(ts, 0)
+	return time.Date(t.Year(), t.Month(), 0, 0, 0, 0, 0, time.Local).Unix()
+}
+
+func GetTimestampOfYear(ts int64) int64 {
+	t := time.Unix(ts, 0)
+	return time.Date(t.Year(), 0, 0, 0, 0, 0, 0, time.Local).Unix()
+}

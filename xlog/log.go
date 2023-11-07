@@ -144,7 +144,7 @@ func NewFileLogger(config Config) (*logrus.Logger, error) {
 	// 日志按天分割
 	hook, err := getRotationHook(config)
 	if err != nil {
-		return nil, fmt.Errorf("create hook error [%v]", err)
+		return nil, fmt.Errorf("create hook failed [%v]", err)
 	}
 	logger.AddHook(hook)
 
@@ -175,7 +175,7 @@ func newRotationHook0(config Config) (*lfshook.LfsHook, error) {
 	// 确保日志目录存在
 	err := xutil.MkdirIfNotExist(path)
 	if err != nil {
-		return nil, fmt.Errorf("create log dir error [%v]", err)
+		return nil, fmt.Errorf("create log dir failed [%v]", err)
 	}
 
 	// 美化日志文件名
@@ -186,7 +186,7 @@ func newRotationHook0(config Config) (*lfshook.LfsHook, error) {
 	// 创建分割器
 	rotation, err := NewRotation(path, name+"%Y%m%d.log", maxAge, rotationTime)
 	if err != nil {
-		return nil, fmt.Errorf("create rotate error [%v]", err)
+		return nil, fmt.Errorf("create rotate failed [%v]", err)
 	}
 
 	return lfshook.NewHook(rotation, getFormatter(config)), nil
@@ -203,7 +203,7 @@ func newRotationHook1(config Config) (*lfshook.LfsHook, error) {
 	// 确保日志目录存在
 	err := xutil.MkdirIfNotExist(config.Path)
 	if err != nil {
-		return nil, fmt.Errorf("create log dir error [%v]", err)
+		return nil, fmt.Errorf("create log dir failed [%v]", err)
 	}
 
 	// 美化日志文件名
@@ -214,11 +214,11 @@ func newRotationHook1(config Config) (*lfshook.LfsHook, error) {
 	// 创建分割器
 	rotation, err := NewRotation(path, name+"%Y%m%d.log", maxAge, rotationTime)
 	if err != nil {
-		return nil, fmt.Errorf("create rotate error [%v]", err)
+		return nil, fmt.Errorf("create rotate failed [%v]", err)
 	}
 	errorRotation, err := NewRotation(path, name+"error-%Y%m%d.log", maxAge, rotationTime)
 	if err != nil {
-		return nil, fmt.Errorf("create rotate error [%v]", err)
+		return nil, fmt.Errorf("create rotate failed [%v]", err)
 	}
 
 	return lfshook.NewHook(lfshook.WriterMap{
@@ -242,7 +242,7 @@ func newRotationHook2(config Config) (*lfshook.LfsHook, error) {
 	// 确保日志目录存在
 	err := xutil.MkdirIfNotExist(config.Path)
 	if err != nil {
-		return nil, fmt.Errorf("create log dir error [%v]", err)
+		return nil, fmt.Errorf("create log dir failed [%v]", err)
 	}
 
 	// 美化日志文件名
@@ -253,19 +253,19 @@ func newRotationHook2(config Config) (*lfshook.LfsHook, error) {
 	// 创建分割器
 	debugRotation, err := NewRotation(path, name+"debug-%Y%m%d.log", maxAge, rotationTime)
 	if err != nil {
-		return nil, fmt.Errorf("create rotate error [%v]", err)
+		return nil, fmt.Errorf("create rotate failed [%v]", err)
 	}
 	infoRotation, err := NewRotation(path, name+"info-%Y%m%d.log", maxAge, rotationTime)
 	if err != nil {
-		return nil, fmt.Errorf("create rotate error [%v]", err)
+		return nil, fmt.Errorf("create rotate failed [%v]", err)
 	}
 	warnRotation, err := NewRotation(path, name+"warn-%Y%m%d.log", maxAge, rotationTime)
 	if err != nil {
-		return nil, fmt.Errorf("create rotate error [%v]", err)
+		return nil, fmt.Errorf("create rotate failed [%v]", err)
 	}
 	errorRotation, err := NewRotation(path, name+"error-%Y%m%d.log", maxAge, rotationTime)
 	if err != nil {
-		return nil, fmt.Errorf("create rotate error [%v]", err)
+		return nil, fmt.Errorf("create rotate failed [%v]", err)
 	}
 
 	return lfshook.NewHook(lfshook.WriterMap{

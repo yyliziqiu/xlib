@@ -23,16 +23,31 @@ func NewJSONHTTP() *JSONHTTP {
 	}
 }
 
-func NewJSONHTTPWithTimeout(d time.Duration) *JSONHTTP {
+func NewJSONHTTP1(d time.Duration) *JSONHTTP {
 	return &JSONHTTP{
 		Client: NewHTTPClientWithTimeout(d),
 	}
 }
 
-func NewJSONHTTPWithBasicAuthAndTimeout(username string, password string, d time.Duration) *JSONHTTP {
+func NewJSONHTTP2(d time.Duration, errorStruct interface{}) *JSONHTTP {
 	return &JSONHTTP{
 		Client:      NewHTTPClientWithTimeout(d),
-		RequestFunc: GetBasicAuthRequestFunc(username, password),
+		ErrorStruct: errorStruct,
+	}
+}
+
+func NewJSONHTTP3(d time.Duration, username string, password string) *JSONHTTP {
+	return &JSONHTTP{
+		Client:      NewHTTPClientWithTimeout(d),
+		RequestFunc: BasicAuthRequestFunc(username, password),
+	}
+}
+
+func NewJSONHTTP4(d time.Duration, errorStruct interface{}, username string, password string) *JSONHTTP {
+	return &JSONHTTP{
+		Client:      NewHTTPClientWithTimeout(d),
+		ErrorStruct: errorStruct,
+		RequestFunc: BasicAuthRequestFunc(username, password),
 	}
 }
 
@@ -69,7 +84,7 @@ func (h *JSONHTTP) Get(rawURL string, header http.Header, query url.Values, out 
 func (h *JSONHTTP) newRequest(method string, url string, header http.Header, body io.Reader) (*http.Request, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return nil, fmt.Errorf("new request error [%v]", err)
+		return nil, fmt.Errorf("new request failed [%v]", err)
 	}
 	for key, values := range header {
 		for _, value := range values {
@@ -90,7 +105,7 @@ func (h *JSONHTTP) doRequest(req *http.Request) (*http.Response, error) {
 func (h *JSONHTTP) handleResponse(res *http.Response, out interface{}) (interface{}, error) {
 	outbs, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read response error [%v]", err)
+		return nil, fmt.Errorf("read response failed [%v]", err)
 	}
 
 	// 校验 content type
@@ -103,7 +118,7 @@ func (h *JSONHTTP) handleResponse(res *http.Response, out interface{}) (interfac
 		if out != nil {
 			err = json.Unmarshal(outbs, out)
 			if err != nil {
-				return nil, fmt.Errorf("unmarshal successful response error [%v]", err)
+				return nil, fmt.Errorf("unmarshal successful response failed [%v]", err)
 			}
 		}
 	} else {
@@ -111,12 +126,12 @@ func (h *JSONHTTP) handleResponse(res *http.Response, out interface{}) (interfac
 		if h.ErrorStruct != nil {
 			err = json.Unmarshal(outbs, &cpy)
 			if err != nil {
-				return nil, fmt.Errorf("unmarshal fail response error [%v]", err)
+				return nil, fmt.Errorf("unmarshal fail response failed [%v]", err)
 			}
 		} else if out != nil {
 			err = json.Unmarshal(outbs, out)
 			if err != nil {
-				return nil, fmt.Errorf("unmarshal fail response error [%v]", err)
+				return nil, fmt.Errorf("unmarshal fail response failed [%v]", err)
 			}
 		}
 		return cpy, NewResponseError(res.StatusCode, string(outbs))
@@ -153,7 +168,7 @@ func (h *JSONHTTP) PostJSON(url string, header http.Header, in interface{}, out 
 	}
 	inbs, err := json.Marshal(in)
 	if err != nil {
-		return nil, fmt.Errorf("marshal request body error [%v]", err)
+		return nil, fmt.Errorf("marshal request body failed [%v]", err)
 	}
 
 	// 创建请求

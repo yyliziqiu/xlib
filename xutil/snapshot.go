@@ -20,22 +20,22 @@ func NewSnapshot(path string) *Snapshot {
 func (s *Snapshot) Store(data interface{}) error {
 	err := MkdirIfNotExist(filepath.Dir(s.Path))
 	if err != nil {
-		return fmt.Errorf("mkdir snapshot dir [%s] error [%v]", filepath.Dir(s.Path), err)
+		return fmt.Errorf("mkdir snapshot dir [%s] failed [%v]", filepath.Dir(s.Path), err)
 	}
 
 	bytes, err := json.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("marshal snapshot data [%s] error [%v]", s.Path, err)
+		return fmt.Errorf("marshal snapshot data [%s] failed [%v]", s.Path, err)
 	}
 
 	err = os.WriteFile(s.Path+snapshotTempExt, bytes, 0644)
 	if err != nil {
-		return fmt.Errorf("store snapshot file [%s] error [%v]", s.Path, err)
+		return fmt.Errorf("store snapshot file [%s] failed [%v]", s.Path, err)
 	}
 
 	err = os.Rename(s.Path+snapshotTempExt, s.Path)
 	if err != nil {
-		return fmt.Errorf("rename snapshot file [%s] error [%v]", s.Path, err)
+		return fmt.Errorf("rename snapshot file [%s] failed [%v]", s.Path, err)
 	}
 
 	return nil
@@ -44,7 +44,7 @@ func (s *Snapshot) Store(data interface{}) error {
 func (s *Snapshot) Load(data interface{}) error {
 	ok, err := IsFileExist(s.Path)
 	if err != nil {
-		return fmt.Errorf("check snapshot file [%s] error [%v]", s.Path, err)
+		return fmt.Errorf("check snapshot file [%s] failed [%v]", s.Path, err)
 	}
 	if !ok {
 		return nil
@@ -52,7 +52,7 @@ func (s *Snapshot) Load(data interface{}) error {
 
 	bytes, err := os.ReadFile(s.Path)
 	if err != nil {
-		return fmt.Errorf("load snapshot file [%s] error [%v]", s.Path, err)
+		return fmt.Errorf("load snapshot file [%s] failed [%v]", s.Path, err)
 	}
 
 	return json.Unmarshal(bytes, data)

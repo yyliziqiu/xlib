@@ -15,7 +15,7 @@ func NewProducer(config Config) (*kafka.Producer, error) {
 
 	producer, err := kafka.NewProducer(conf)
 	if err != nil {
-		return nil, fmt.Errorf("create producer error [%v]", err)
+		return nil, fmt.Errorf("create producer failed [%v]", err)
 	}
 
 	return producer, nil

@@ -23,7 +23,7 @@ func NewHTTPClientWithTimeout(d time.Duration) *http.Client {
 	}
 }
 
-func GetBasicAuthRequestFunc(username string, password string) func(req *http.Request) {
+func BasicAuthRequestFunc(username string, password string) func(req *http.Request) {
 	return func(req *http.Request) {
 		req.SetBasicAuth(username, password)
 	}

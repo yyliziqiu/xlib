@@ -13,7 +13,7 @@ func BindForm(ctx *gin.Context, form interface{}, verbose bool) bool {
 	err := ctx.ShouldBind(form)
 	if err != nil {
 		if errorLogger != nil {
-			errorLogger.Warnf("Bind error, path: %s, form: %v, error: %v.", ctx.FullPath(), form, err)
+			errorLogger.Warnf("Bind failed, path: %s, form: %v, error: %v.", ctx.FullPath(), form, err)
 		}
 		if verbose {
 			xresponse.Error(ctx, ParamError.Wrap(err))
