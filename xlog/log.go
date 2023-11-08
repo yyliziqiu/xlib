@@ -89,7 +89,7 @@ func getFormatter(config Config) logrus.Formatter {
 	var (
 		formatter        = config.Formatter
 		timestampFormat  = config.TimestampFormat
-		callerPrettyfier = getCallerPrettyfier(config.CallerFields)
+		callerPrettyfier = getCallerPrettyfier(config.CallerFields, config.CallerIsFull)
 	)
 
 	if timestampFormat == "" {
@@ -112,19 +112,22 @@ func getFormatter(config Config) logrus.Formatter {
 	}
 }
 
-func getCallerPrettyfier(fields string) func(frame *runtime.Frame) (function string, file string) {
-	switch fields {
-	case fieldsFilename:
-		return func(frame *runtime.Frame) (function string, file string) {
-			return "", fmt.Sprintf("%s:%d", frame.File, frame.Line)
+func getCallerPrettyfier(fields string, isFull bool) func(frame *runtime.Frame) (function string, file string) {
+	return func(frame *runtime.Frame) (string, string) {
+		function := frame.Function
+		filename := frame.File
+		if !isFull {
+			function = filepath.Base(function)
+			filename = filepath.Base(filename)
 		}
-	case fieldsFunction:
-		return func(frame *runtime.Frame) (function string, file string) {
-			return frame.Function, ""
-		}
-	default:
-		return func(frame *runtime.Frame) (function string, file string) {
-			return frame.Function, fmt.Sprintf("%s:%d", frame.File, frame.Line)
+
+		switch fields {
+		case fieldsAll:
+			return function, fmt.Sprintf("%s:%d", filename, frame.Line)
+		case fieldsFilename:
+			return "", fmt.Sprintf("%s:%d", filename, frame.Line)
+		default:
+			return function, ""
 		}
 	}
 }

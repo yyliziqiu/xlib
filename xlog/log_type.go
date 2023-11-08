@@ -22,6 +22,7 @@ type Config struct {
 	Formatter       string
 	EnableCaller    bool
 	CallerFields    string
+	CallerIsFull    bool
 	TimestampFormat string
 }
 
