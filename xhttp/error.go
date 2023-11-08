@@ -6,18 +6,20 @@ import (
 
 type ResponseError struct {
 	StatusCode int
-	Body       string
+	BodyString string
+	BodyStruct interface{}
 }
 
-func NewResponseError(statusCode int, body string) *ResponseError {
+func newResponseError(statusCode int, bodyString string, bodyStruct interface{}) *ResponseError {
 	return &ResponseError{
 		StatusCode: statusCode,
-		Body:       body,
+		BodyString: bodyString,
+		BodyStruct: bodyStruct,
 	}
 }
 
-func (e *ResponseError) Error() string {
-	return fmt.Sprintf("status code [%d], body [%s]", e.StatusCode, e.Body)
+func (e ResponseError) Error() string {
+	return fmt.Sprintf("status code [%d], body [%s]", e.StatusCode, e.BodyString)
 }
 
 func IsResponseError(err error) bool {
