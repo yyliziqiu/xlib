@@ -1,10 +1,10 @@
-package xapi
+package xweb
 
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/yyliziqiu/xlib/xapi/xresponse"
 	"github.com/yyliziqiu/xlib/xerror"
+	"github.com/yyliziqiu/xlib/xweb/xresponse"
 )
 
 var ParamError = xerror.New("A1000", "param error")

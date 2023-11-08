@@ -1,4 +1,4 @@
-package xapi
+package xweb
 
 import (
 	"io"
@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
-	"github.com/yyliziqiu/xlib/xapi/xresponse"
 	"github.com/yyliziqiu/xlib/xlog"
+	"github.com/yyliziqiu/xlib/xweb/xresponse"
 )
 
 type Config struct {
@@ -22,10 +22,10 @@ func (c *Config) Default() {
 		c.Addr = ":80"
 	}
 	if c.ErrorLogName == "" {
-		c.ErrorLogName = "http-error"
+		c.ErrorLogName = "web-error"
 	}
 	if c.AccessLogName == "" {
-		c.AccessLogName = "http-access"
+		c.AccessLogName = "web-access"
 	}
 }
 

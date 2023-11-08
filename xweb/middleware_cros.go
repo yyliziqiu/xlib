@@ -1,11 +1,11 @@
-package xapi
+package xweb
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/yyliziqiu/xlib/xapi/xresponse"
+	"github.com/yyliziqiu/xlib/xweb/xresponse"
 )
 
 type CrosHeaders struct {
