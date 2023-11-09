@@ -24,6 +24,7 @@ type API struct {
 	client       *http.Client
 	baseURL      string
 	ResType      string
+	errorFunc    func(interface{}) bool
 	errorStruct  interface{} // must not point
 	requestFunc  func(req *http.Request)
 	logger       *logrus.Logger
@@ -149,6 +150,11 @@ func (a *API) handleJSONResponse(statusCode int, body []byte, out interface{}) e
 			if err != nil {
 				return fmt.Errorf("unmarshal response [%s] failed [%v]", string(body), err)
 			}
+			if a.errorFunc != nil {
+				if a.errorFunc(out) {
+					return newResponseError(statusCode, string(body), out)
+				}
+			}
 		}
 	} else {
 		var ret interface{}
@@ -159,6 +165,7 @@ func (a *API) handleJSONResponse(statusCode int, body []byte, out interface{}) e
 				return fmt.Errorf("unmarshal response [%s] failed [%v]", string(body), err)
 			}
 		} else if out != nil {
+			ret = out
 			err := json.Unmarshal(body, out)
 			if err != nil {
 				return fmt.Errorf("unmarshal response [%s] failed [%v]", string(body), err)
@@ -186,6 +193,9 @@ func (a *API) Get(path string, query url.Values, header http.Header, out interfa
 		return err
 	}
 
+	// 开启计时器
+	timer := xutil.NewTimer()
+
 	// 发送请求
 	res, err := a.doRequest(req)
 	if err != nil {
@@ -196,9 +206,9 @@ func (a *API) Get(path string, query url.Values, header http.Header, out interfa
 	// 解析并返回响应结果
 	body, err := a.handleResponse(res, out)
 	if err != nil {
-		a.logger.Warn("Response failed, URL: %s, Header: %v, Error: %v.", req.URL, header, err)
+		a.logger.Warn("Response failed, URL: %s, Header: %v, Error: %v, Cost: %s.", req.URL, header, err, timer.Stops())
 	} else {
-		a.logger.Info("Response succeed, URL: %s, Header: %v, Response: %v.", req.URL, header, body)
+		a.logger.Info("Response succeed, URL: %s, Header: %v, Response: %v, Cost: %s.", req.URL, header, body, timer.Stops())
 	}
 
 	return err
@@ -216,6 +226,9 @@ func (a *API) PostForm(path string, query url.Values, header http.Header, in url
 	// 添加 header
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
+	// 开启计时器
+	timer := xutil.NewTimer()
+
 	// 发送请求
 	res, err := a.doRequest(req)
 	if err != nil {
@@ -226,9 +239,9 @@ func (a *API) PostForm(path string, query url.Values, header http.Header, in url
 	// 解析并返回响应结果
 	resBody, err := a.handleResponse(res, out)
 	if err != nil {
-		a.logger.Warn("Response failed, URL: %s, Header: %v, Request: %s, Error: %v.", req.URL, header, reqBody, err)
+		a.logger.Warn("Response failed, URL: %s, Header: %v, Request: %s, Error: %v, Cost: %s.", req.URL, header, reqBody, err, timer.Stops())
 	} else {
-		a.logger.Info("Response succeed, URL: %s, Header: %v, Request: %s, Response: %v.", req.URL, header, reqBody, string(resBody))
+		a.logger.Info("Response succeed, URL: %s, Header: %v, Request: %s, Response: %v, Cost: %s.", req.URL, header, reqBody, string(resBody), timer.Stops())
 	}
 
 	return err
@@ -253,6 +266,9 @@ func (a *API) PostJSON(path string, query url.Values, header http.Header, in int
 	// 添加 header
 	req.Header.Set("Content-Type", "application/json")
 
+	// 开启计时器
+	timer := xutil.NewTimer()
+
 	// 发送请求
 	res, err := a.doRequest(req)
 	if err != nil {
@@ -263,9 +279,9 @@ func (a *API) PostJSON(path string, query url.Values, header http.Header, in int
 	// 解析并返回响应结果
 	resBody, err := a.handleResponse(res, out)
 	if err != nil {
-		a.logger.Warn("Response failed, URL: %s, Header: %v, Request: %s, Error: %v.", req.URL, header, string(reqBody), err)
+		a.logger.Warn("Response failed, URL: %s, Header: %v, Request: %s, Error: %v, Cost: %s.", req.URL, header, string(reqBody), err, timer.Stops())
 	} else {
-		a.logger.Info("Response succeed, URL: %s, Header: %v, Request: %s, Response: %v.", req.URL, header, string(reqBody), string(resBody))
+		a.logger.Info("Response succeed, URL: %s, Header: %v, Request: %s, Response: %v, Cost: %s.", req.URL, header, string(reqBody), string(resBody), timer.Stops())
 	}
 
 	return err

@@ -33,6 +33,12 @@ func WithResType(typ string) Option {
 	}
 }
 
+func WithErrorFunc(f func(interface{}) bool) Option {
+	return func(api *API) {
+		api.errorFunc = f
+	}
+}
+
 func WithErrorStruct(errorStruct interface{}) Option {
 	return func(api *API) {
 		api.errorStruct = errorStruct
