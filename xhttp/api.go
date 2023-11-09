@@ -80,13 +80,13 @@ func (a *API) logWarn(format string, args ...interface{}) {
 func (a *API) newRequest(method string, path string, query url.Values, header http.Header, body io.Reader) (*http.Request, error) {
 	rawURL, err := AppendQuery(a.url(path), query)
 	if err != nil {
-		a.logger.Warn("Append query failed, URL: %s, Query: %v, Error: %v.", rawURL, query, err)
+		a.logWarn("Append query failed, URL: %s, Query: %v, Error: %v.", rawURL, query, err)
 		return nil, fmt.Errorf("append query failed [%v]", err)
 	}
 
 	req, err := http.NewRequest(method, rawURL, body)
 	if err != nil {
-		a.logger.Warn("New Request failed, URL: %s, Error: %v.", rawURL, err)
+		a.logWarn("New Request failed, URL: %s, Error: %v.", rawURL, err)
 		return nil, fmt.Errorf("new request failed [%v]", err)
 	}
 
@@ -114,7 +114,7 @@ func (a *API) url(path string) string {
 func (a *API) doRequest(req *http.Request) (*http.Response, error) {
 	res, err := a.client.Do(req)
 	if err != nil {
-		a.logger.Warn("Do Request failed, URL: %s, Error: %v.", req.URL, err)
+		a.logWarn("Do Request failed, URL: %s, Error: %v.", req.URL, err)
 		return nil, err
 	}
 	return res, nil
@@ -206,9 +206,9 @@ func (a *API) Get(path string, query url.Values, header http.Header, out interfa
 	// 解析并返回响应结果
 	body, err := a.handleResponse(res, out)
 	if err != nil {
-		a.logger.Warn("Response failed, URL: %s, Header: %v, Error: %v, Cost: %s.", req.URL, header, err, timer.Stops())
+		a.logWarn("Response failed, URL: %s, Header: %v, Error: %v, Cost: %s.", req.URL, header, err, timer.Stops())
 	} else {
-		a.logger.Info("Response succeed, URL: %s, Header: %v, Response: %v, Cost: %s.", req.URL, header, body, timer.Stops())
+		a.logInfo("Response succeed, URL: %s, Header: %v, Response: %v, Cost: %s.", req.URL, header, body, timer.Stops())
 	}
 
 	return err
@@ -239,9 +239,9 @@ func (a *API) PostForm(path string, query url.Values, header http.Header, in url
 	// 解析并返回响应结果
 	resBody, err := a.handleResponse(res, out)
 	if err != nil {
-		a.logger.Warn("Response failed, URL: %s, Header: %v, Request: %s, Error: %v, Cost: %s.", req.URL, header, reqBody, err, timer.Stops())
+		a.logWarn("Response failed, URL: %s, Header: %v, Request: %s, Error: %v, Cost: %s.", req.URL, header, reqBody, err, timer.Stops())
 	} else {
-		a.logger.Info("Response succeed, URL: %s, Header: %v, Request: %s, Response: %v, Cost: %s.", req.URL, header, reqBody, string(resBody), timer.Stops())
+		a.logInfo("Response succeed, URL: %s, Header: %v, Request: %s, Response: %v, Cost: %s.", req.URL, header, reqBody, string(resBody), timer.Stops())
 	}
 
 	return err
@@ -279,9 +279,9 @@ func (a *API) PostJSON(path string, query url.Values, header http.Header, in int
 	// 解析并返回响应结果
 	resBody, err := a.handleResponse(res, out)
 	if err != nil {
-		a.logger.Warn("Response failed, URL: %s, Header: %v, Request: %s, Error: %v, Cost: %s.", req.URL, header, string(reqBody), err, timer.Stops())
+		a.logWarn("Response failed, URL: %s, Header: %v, Request: %s, Error: %v, Cost: %s.", req.URL, header, string(reqBody), err, timer.Stops())
 	} else {
-		a.logger.Info("Response succeed, URL: %s, Header: %v, Request: %s, Response: %v, Cost: %s.", req.URL, header, string(reqBody), string(resBody), timer.Stops())
+		a.logInfo("Response succeed, URL: %s, Header: %v, Request: %s, Response: %v, Cost: %s.", req.URL, header, string(reqBody), string(resBody), timer.Stops())
 	}
 
 	return err
