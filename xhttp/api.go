@@ -24,8 +24,8 @@ type API struct {
 	client       *http.Client
 	baseURL      string
 	ResType      string
-	errorFunc    func(interface{}) bool
-	errorStruct  interface{} // must not point
+	errorFunc    func(interface{}) bool // 当 status code 为 200 时有效，用来判断响应是否成功，出入参数为 out
+	errorStruct  interface{}            // 不能是指针
 	requestFunc  func(req *http.Request)
 	logger       *logrus.Logger
 	maxLogLength int
