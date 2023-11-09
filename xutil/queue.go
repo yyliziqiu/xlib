@@ -563,16 +563,16 @@ func (q *Queue) CopyItems() []interface{} {
 	return q.copyItems()
 }
 
-func (q *Queue) Load(data interface{}, f func(interface{}) []interface{}) error {
+func (q *Queue) Load(data interface{}, f func() []interface{}) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	err := q.snapshot.Load(&data)
+	err := q.snapshot.Load(data)
 	if err != nil {
 		return err
 	}
 
-	list := f(data)
+	list := f()
 
 	q.reset(list)
 
