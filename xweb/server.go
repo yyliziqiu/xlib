@@ -1,7 +1,9 @@
 package xweb
 
 import (
+	"fmt"
 	"io"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -69,9 +71,23 @@ func createEngine() *gin.Engine {
 	engine := gin.New()
 	engine.NoRoute(xresponse.AbortNotFound)
 	engine.NoMethod(xresponse.AbortMethodNotAllowed)
-	engine.Use(gin.Logger())
+	engine.Use(gin.LoggerWithFormatter(logFormatter))
 	engine.Use(gin.CustomRecovery(recovery))
 	return engine
+}
+
+func logFormatter(param gin.LogFormatterParams) string {
+	if param.Latency > time.Minute {
+		param.Latency = param.Latency.Truncate(time.Second)
+	}
+	return fmt.Sprintf("%3d | %13v | %15s |%-7s %#v\n%s",
+		param.StatusCode,
+		param.Latency,
+		param.ClientIP,
+		param.Method,
+		param.Path,
+		param.ErrorMessage,
+	)
 }
 
 func recovery(ctx *gin.Context, err interface{}) {

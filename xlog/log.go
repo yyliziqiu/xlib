@@ -105,7 +105,6 @@ func getFormatter(config Config) logrus.Formatter {
 	default:
 		return &logrus.TextFormatter{
 			DisableQuote:     true,
-			PadLevelText:     true,
 			TimestampFormat:  timestampFormat,
 			CallerPrettyfier: callerPrettyfier,
 		}
