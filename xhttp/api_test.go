@@ -18,10 +18,14 @@ func TestAPI_Get(t *testing.T) {
 		WithDump(true),
 	)
 
-	err := api.Get("https://www.baidu.com", nil, nil, nil)
+	var result []byte
+
+	err := api.Get("https://www.baidu.com", nil, nil, &result)
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	t.Log(string(result))
 }
 
 func TestAPI_PostForm(t *testing.T) {
