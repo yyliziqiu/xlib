@@ -215,10 +215,14 @@ func (a *API) Get(path string, query url.Values, header http.Header, out interfa
 }
 
 func (a *API) PostForm(path string, query url.Values, header http.Header, in url.Values, out interface{}) error {
-	reqBody := strings.NewReader(in.Encode())
+	reqBody := in.Encode()
+	logBody, err := url.QueryUnescape(reqBody)
+	if err != nil {
+		logBody = reqBody
+	}
 
 	// 创建请求
-	req, err := a.newRequest(http.MethodPost, path, query, header, reqBody)
+	req, err := a.newRequest(http.MethodPost, path, query, header, strings.NewReader(reqBody))
 	if err != nil {
 		return err
 	}
@@ -239,9 +243,9 @@ func (a *API) PostForm(path string, query url.Values, header http.Header, in url
 	// 解析并返回响应结果
 	resBody, err := a.handleResponse(res, out)
 	if err != nil {
-		a.logWarn("Response failed, URL: %s, Header: %v, Request: %s, Error: %v, Cost: %s.", req.URL, header, reqBody, err, timer.Stops())
+		a.logWarn("Response failed, URL: %s, Header: %v, Request: %s, Error: %v, Cost: %s.", req.URL, header, logBody, err, timer.Stops())
 	} else {
-		a.logInfo("Response succeed, URL: %s, Header: %v, Request: %s, Response: %v, Cost: %s.", req.URL, header, reqBody, string(resBody), timer.Stops())
+		a.logInfo("Response succeed, URL: %s, Header: %v, Request: %s, Response: %v, Cost: %s.", req.URL, header, logBody, string(resBody), timer.Stops())
 	}
 
 	return err
