@@ -91,8 +91,9 @@ func (a *API) dumpRequest(req *http.Request) {
 		return
 	}
 
+	fmt.Println("\n---------- Request ----------")
 	fmt.Printf(string(bs))
-	fmt.Println()
+	fmt.Println("\n---------- Request End----------")
 }
 
 func (a *API) dumpResponse(res *http.Response) {
@@ -106,8 +107,9 @@ func (a *API) dumpResponse(res *http.Response) {
 		return
 	}
 
+	fmt.Println("\n---------- Response ----------")
 	fmt.Printf(string(bs))
-	fmt.Println()
+	fmt.Println("\n---------- Response End----------")
 }
 
 func (a *API) newRequest(method string, path string, query url.Values, header http.Header, body io.Reader) (*http.Request, error) {
