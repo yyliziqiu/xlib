@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strings"
 	"time"
@@ -28,7 +29,8 @@ type API struct {
 	errorStruct  interface{}            // 不能是指针
 	requestFunc  func(req *http.Request)
 	logger       *logrus.Logger
-	maxLogLength int
+	logLengthMax int
+	dump         bool
 }
 
 func NewAPI(options ...Option) *API {
@@ -39,7 +41,8 @@ func NewAPI(options ...Option) *API {
 		errorStruct:  nil,
 		requestFunc:  nil,
 		logger:       nil,
-		maxLogLength: 1024,
+		logLengthMax: 1024,
+		dump:         false,
 	}
 
 	for _, option := range options {
@@ -47,6 +50,16 @@ func NewAPI(options ...Option) *API {
 	}
 
 	return api
+}
+
+func (a *API) truncateLog(log string) string {
+	if a.logLengthMax <= 0 {
+		return ""
+	}
+	if len(log) <= a.logLengthMax {
+		return log
+	}
+	return log[:a.logLengthMax]
 }
 
 func (a *API) logInfo(format string, args ...interface{}) {
@@ -58,16 +71,6 @@ func (a *API) logInfo(format string, args ...interface{}) {
 	a.logger.Info(log)
 }
 
-func (a *API) truncateLog(log string) string {
-	if a.maxLogLength <= 0 {
-		return ""
-	}
-	if len(log) <= a.maxLogLength {
-		return log
-	}
-	return log[:a.maxLogLength]
-}
-
 func (a *API) logWarn(format string, args ...interface{}) {
 	if a.logger == nil {
 		return
@@ -75,6 +78,36 @@ func (a *API) logWarn(format string, args ...interface{}) {
 	log := fmt.Sprintf(format, args...)
 	log = a.truncateLog(log)
 	a.logger.Warn(log)
+}
+
+func (a *API) dumpRequest(req *http.Request) {
+	if !a.dump {
+		return
+	}
+
+	bs, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		fmt.Printf("Dump request failed, error: %v\n", err)
+		return
+	}
+
+	fmt.Printf(string(bs))
+	fmt.Println()
+}
+
+func (a *API) dumpResponse(res *http.Response) {
+	if !a.dump {
+		return
+	}
+
+	bs, err := httputil.DumpResponse(res, true)
+	if err != nil {
+		fmt.Printf("Dump response failed, error: %v", err)
+		return
+	}
+
+	fmt.Printf(string(bs))
+	fmt.Println()
 }
 
 func (a *API) newRequest(method string, path string, query url.Values, header http.Header, body io.Reader) (*http.Request, error) {
@@ -112,6 +145,7 @@ func (a *API) url(path string) string {
 }
 
 func (a *API) doRequest(req *http.Request) (*http.Response, error) {
+	a.dumpRequest(req)
 	res, err := a.client.Do(req)
 	if err != nil {
 		a.logWarn("Do Request failed, URL: %s, Error: %v.", req.URL, err)
@@ -121,6 +155,7 @@ func (a *API) doRequest(req *http.Request) (*http.Response, error) {
 }
 
 func (a *API) handleResponse(res *http.Response, out interface{}) ([]byte, error) {
+	a.dumpResponse(res)
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read response failed [%v]", err)

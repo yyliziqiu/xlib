@@ -65,8 +65,14 @@ func WithLogger(logger *logrus.Logger) Option {
 	}
 }
 
-func WithMaxLogLength(n int) Option {
+func WithDump(enabled bool) Option {
 	return func(api *API) {
-		api.maxLogLength = n
+		api.dump = enabled
+	}
+}
+
+func WithLogLengthMax(n int) Option {
+	return func(api *API) {
+		api.logLengthMax = n
 	}
 }
