@@ -218,6 +218,10 @@ func (a *API) handleTextResponse(statusCode int, body []byte, out interface{}) e
 		return newResponseError(statusCode, string(body), nil)
 	}
 
+	if out == nil {
+		return nil
+	}
+
 	bs, ok := out.(*[]byte)
 	if !ok {
 		return fmt.Errorf("response receiver must *[]byte type")
