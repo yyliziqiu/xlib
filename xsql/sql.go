@@ -30,7 +30,7 @@ func GetLogger() *logrus.Logger {
 	}
 	loggerOnce.Do(func() {
 		if logger == nil {
-			logger = xlog.MustNewLoggerByName("es")
+			logger = xlog.MustNewLoggerByName("gorm")
 		}
 	})
 	return logger

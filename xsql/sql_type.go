@@ -25,7 +25,6 @@ type Config struct {
 
 	// only valid when use gorm
 	EnableORM                    bool          // optional
-	EnableLog                    bool          // optional
 	LogLevel                     int           // optional
 	LogSlowThreshold             time.Duration // optional
 	LogParameterizedQueries      bool          // optional
@@ -55,15 +54,11 @@ func (c *Config) Default() {
 		c.LogLevel = 1
 	}
 	if c.LogSlowThreshold == 0 {
-		c.LogSlowThreshold = 15 * time.Second
+		c.LogSlowThreshold = 3 * time.Second
 	}
 }
 
 func (c Config) GORMConfig() *gorm.Config {
-	if !c.EnableLog {
-		return &gorm.Config{}
-	}
-
 	return &gorm.Config{Logger: gormlogger.New(GetLogger(), gormlogger.Config{
 		LogLevel:                  gormlogger.LogLevel(c.LogLevel), // Log level
 		SlowThreshold:             c.LogSlowThreshold,              // Slow SQL threshold
