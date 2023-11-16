@@ -52,7 +52,7 @@ func (c *Config) Default() {
 		c.ConnMaxLifetime = 10 * time.Minute
 	}
 	if c.LogLevel == 0 {
-		c.LogLevel = 4
+		c.LogLevel = 1
 	}
 	if c.LogSlowThreshold == 0 {
 		c.LogSlowThreshold = 15 * time.Second
