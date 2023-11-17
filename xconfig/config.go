@@ -6,13 +6,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Init(path string, c interface{}) error {
-	viper.SetConfigFile(path)
-	if err := viper.ReadInConfig(); err != nil {
-		return fmt.Errorf("read config failed [%v]", err)
+func Init(path string, c interface{}) (err error) {
+	v := viper.New()
+	v.SetConfigFile(path)
+
+	err = v.ReadInConfig()
+	if err != nil {
+		return fmt.Errorf("read config [%s] failed [%v]", path, err)
 	}
-	if err := viper.Unmarshal(c); err != nil {
-		return fmt.Errorf("unmarshal config failed [%v]", err)
+
+	err = v.Unmarshal(c)
+	if err != nil {
+		return fmt.Errorf("unmarshal config [%s] failed [%v]", path, err)
 	}
+
 	return nil
 }
