@@ -29,7 +29,13 @@ func WithBaseURL(baseURL string) Option {
 
 func WithResType(typ string) Option {
 	return func(api *API) {
-		api.ResType = typ
+		api.resType = typ
+	}
+}
+
+func WithResTypeStrict(strict bool) Option {
+	return func(api *API) {
+		api.resTypeStrict = strict
 	}
 }
 
