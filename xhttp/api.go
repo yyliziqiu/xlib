@@ -184,7 +184,7 @@ func (a *API) handleResponse(res *http.Response, out interface{}) ([]byte, error
 }
 
 func (a *API) handleJSONResponse(statusCode int, body []byte, out interface{}) error {
-	if statusCode == http.StatusOK {
+	if statusCode/100 == 2 {
 		if out != nil {
 			err := json.Unmarshal(body, out)
 			if err != nil {
@@ -217,7 +217,7 @@ func (a *API) handleJSONResponse(statusCode int, body []byte, out interface{}) e
 }
 
 func (a *API) handleTextResponse(statusCode int, body []byte, out interface{}) error {
-	if statusCode != http.StatusOK {
+	if statusCode/100 != 2 {
 		return newResponseError(statusCode, string(body), nil)
 	}
 
