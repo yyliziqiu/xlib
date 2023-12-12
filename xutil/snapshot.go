@@ -21,11 +21,11 @@ func NewSnapshot(path string, data interface{}) *Snapshot {
 	}
 }
 
-func (s *Snapshot) Store() error {
-	return s.StoreData(s.Data)
+func (s *Snapshot) Save() error {
+	return s.SaveData(s.Data)
 }
 
-func (s *Snapshot) StoreData(data interface{}) error {
+func (s *Snapshot) SaveData(data interface{}) error {
 	err := MkdirIfNotExist(filepath.Dir(s.Path))
 	if err != nil {
 		return fmt.Errorf("mkdir snapshot dir [%s] failed [%v]", filepath.Dir(s.Path), err)
@@ -38,7 +38,7 @@ func (s *Snapshot) StoreData(data interface{}) error {
 
 	err = os.WriteFile(s.Path+snapshotTempExt, bytes, 0644)
 	if err != nil {
-		return fmt.Errorf("store snapshot file [%s] failed [%v]", s.Path, err)
+		return fmt.Errorf("save snapshot file [%s] failed [%v]", s.Path, err)
 	}
 
 	err = os.Rename(s.Path+snapshotTempExt, s.Path)

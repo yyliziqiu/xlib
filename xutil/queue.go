@@ -600,10 +600,10 @@ func (q *Queue) Load(item interface{}) error {
 	return nil
 }
 
-// Store 保存队列数据快照
-func (q *Queue) Store() error {
+// Save 保存队列数据快照
+func (q *Queue) Save() error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	return q.snapshot.StoreData(q.copyItems())
+	return q.snapshot.SaveData(q.copyItems())
 }
