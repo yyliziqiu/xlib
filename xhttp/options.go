@@ -39,12 +39,6 @@ func WithResTypeStrict(strict bool) Option {
 	}
 }
 
-func WithErrorFunc(f func(interface{}) bool) Option {
-	return func(api *API) {
-		api.errorFunc = f
-	}
-}
-
 func WithErrorStruct(errorStruct interface{}) Option {
 	return func(api *API) {
 		api.errorStruct = errorStruct
@@ -71,9 +65,9 @@ func WithLogger(logger *logrus.Logger) Option {
 	}
 }
 
-func WithDump(enabled bool) Option {
+func WithLogDump(enabled bool) Option {
 	return func(api *API) {
-		api.dump = enabled
+		api.logDump = enabled
 	}
 }
 

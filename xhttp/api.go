@@ -26,12 +26,11 @@ type API struct {
 	baseURL       string
 	resType       string                  // 如果值为 json，则会自动将响应数据反序列化
 	resTypeStrict bool                    // 在 ResType != "text" 时有效，此时会根据 ResType 校验 Content-Type
-	errorFunc     func(interface{}) bool  // 当 status code 为 200 时有效，用来判断响应是否成功，出入参数为 out
 	errorStruct   interface{}             // 不能是指针
 	requestFunc   func(req *http.Request) // 在发送请求前调用，可以用来设置 basic auth
 	logger        *logrus.Logger          // 如果为 nil，则不记录日志
 	logLengthMax  int                     // 日志最大长度
-	dump          bool                    // 将 HTTP 报文打印到控制台，调试用
+	logDump       bool                    // 将 HTTP 报文打印到控制台，调试用
 }
 
 func NewAPI(options ...Option) *API {
@@ -40,12 +39,11 @@ func NewAPI(options ...Option) *API {
 		baseURL:       "",
 		resType:       ResTypeJSON,
 		resTypeStrict: false,
-		errorFunc:     nil,
 		errorStruct:   nil,
 		requestFunc:   nil,
 		logger:        nil,
 		logLengthMax:  1024,
-		dump:          false,
+		logDump:       false,
 	}
 
 	for _, option := range options {
@@ -84,7 +82,7 @@ func (a *API) logWarn(format string, args ...interface{}) {
 }
 
 func (a *API) dumpRequest(req *http.Request) {
-	if !a.dump {
+	if !a.logDump {
 		return
 	}
 
@@ -100,7 +98,7 @@ func (a *API) dumpRequest(req *http.Request) {
 }
 
 func (a *API) dumpResponse(res *http.Response) {
-	if !a.dump {
+	if !a.logDump {
 		return
 	}
 
@@ -190,8 +188,8 @@ func (a *API) handleJSONResponse(statusCode int, body []byte, out interface{}) e
 			if err != nil {
 				return fmt.Errorf("unmarshal response [%s] failed [%v]", string(body), err)
 			}
-			if a.errorFunc != nil {
-				if a.errorFunc(out) {
+			if jr, ok := out.(JsonResponse); ok {
+				if jr.IsError() {
 					return newResponseError(statusCode, string(body), out)
 				}
 			}

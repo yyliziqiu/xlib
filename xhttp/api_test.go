@@ -15,7 +15,6 @@ func TestAPI_Get(t *testing.T) {
 		WithResType(ResTypeText),
 		WithTimeout(time.Second),
 		WithLogger(logger),
-		WithDump(true),
 	)
 
 	var result []byte
@@ -35,7 +34,6 @@ func TestAPI_PostForm(t *testing.T) {
 		WithResType(ResTypeText),
 		WithTimeout(time.Second),
 		WithLogger(logger),
-		WithDump(true),
 	)
 
 	body := url.Values{}
@@ -56,7 +54,6 @@ func TestAPI_PostJSON(t *testing.T) {
 		WithResType(ResTypeText),
 		WithTimeout(time.Second),
 		WithLogger(logger),
-		WithDump(true),
 	)
 
 	body := map[string]string{

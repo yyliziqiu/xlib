@@ -4,6 +4,10 @@ import (
 	"net/url"
 )
 
+type JsonResponse interface {
+	IsError() bool
+}
+
 func AppendQuery(rawURL string, query url.Values) (string, error) {
 	if len(query) == 0 {
 		return rawURL, nil
