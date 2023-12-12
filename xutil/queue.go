@@ -3,6 +3,7 @@ package xutil
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"sync"
 
 	"github.com/sirupsen/logrus"
@@ -10,37 +11,39 @@ import (
 
 var (
 	EmptyError           = errors.New("queue is empty")
-	IndexOutOfRangeError = errors.New("index out of range")
 	ItemNotFoundError    = errors.New("item not found")
+	IndexOutOfRangeError = errors.New("index out of range")
 )
 
 type Queue struct {
-	step   int
-	debug  bool
-	logger *logrus.Logger
+	step     int
+	debug    bool
+	logger   *logrus.Logger
+	snapshot *Snapshot
 
 	list []interface{}
 	head int
 	tail int
 	mu   sync.RWMutex
-
-	snapshot *Snapshot
 }
 
 func NewQueue(n int) *Queue {
-	return NewQueueWithPersist(n, "")
+	return NewQueueWithSnapshot(n, "")
 }
 
-func NewQueueWithPersist(n int, path string) *Queue {
+func NewQueueWithSnapshot(n int, path string) *Queue {
 	if n <= 0 {
 		n = 1024
 	}
 
-	return &Queue{
+	q := &Queue{
 		step:     n,
-		list:     make([]interface{}, n+1),
-		snapshot: NewSnapshot(path),
+		snapshot: NewSnapshot(path, ""),
 	}
+
+	q.list = make([]interface{}, n+1)
+
+	return q
 }
 
 // 获取队列容量
@@ -563,25 +566,44 @@ func (q *Queue) CopyItems() []interface{} {
 	return q.copyItems()
 }
 
-func (q *Queue) Load(data interface{}, f func() []interface{}) error {
+type QueueSnapshot interface {
+	List() []interface{}
+}
+
+// Load 加载队列数据快照
+func (q *Queue) Load(item interface{}) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	err := q.snapshot.Load(data)
+	var (
+		itype    = reflect.TypeOf(item)
+		slice    = reflect.MakeSlice(reflect.SliceOf(itype), 0, 0)
+		slicePtr = reflect.New(slice.Type())
+		size     int
+	)
+
+	err := q.snapshot.LoadData(slicePtr.Interface())
 	if err != nil {
 		return err
 	}
 
-	list := f()
+	size = slicePtr.Elem().Len()
+	slice = slicePtr.Elem().Slice(0, size)
+
+	var list []interface{}
+	for i := 0; i < size; i++ {
+		list = append(list, slice.Index(i).Interface())
+	}
 
 	q.reset(list)
 
 	return nil
 }
 
+// Store 保存队列数据快照
 func (q *Queue) Store() error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	return q.snapshot.Store(q.copyItems())
+	return q.snapshot.StoreData(q.copyItems())
 }
