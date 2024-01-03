@@ -1,4 +1,4 @@
-package xutil
+package xcompress
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-func CompressBytesByGzip(data []byte) ([]byte, error) {
+func Gzip(data []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	wtr := gzip.NewWriter(&buf)
 	defer wtr.Close()
@@ -28,7 +28,7 @@ func CompressBytesByGzip(data []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func UnCompressBytesByGzip(data []byte) ([]byte, error) {
+func UnGzip(data []byte) ([]byte, error) {
 	rdr, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func UnCompressBytesByGzip(data []byte) ([]byte, error) {
 	return result, nil
 }
 
-func CompressBytesByZlib(data []byte) ([]byte, error) {
+func Zlib(data []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	wtr := zlib.NewWriter(&buf)
 	defer wtr.Close()
@@ -64,7 +64,7 @@ func CompressBytesByZlib(data []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func UnCompressBytesByZlib(data []byte) ([]byte, error) {
+func UnZlib(data []byte) ([]byte, error) {
 	rdr, err := zlib.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, err

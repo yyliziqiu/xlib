@@ -1,10 +1,10 @@
-package xutil
+package xurl
 
 import (
 	"strings"
 )
 
-func JoinURL(segments ...string) string {
+func Join(segments ...string) string {
 	if len(segments) == 0 {
 		return ""
 	}
@@ -12,11 +12,13 @@ func JoinURL(segments ...string) string {
 	n := len(segments)
 	sb := strings.Builder{}
 	for i, segment := range segments {
-		if i < n-1 {
+		if segment == "" {
+			continue
+		} else if i == n-1 {
+			sb.WriteString(strings.TrimLeft(segment, "/"))
+		} else {
 			sb.WriteString(strings.Trim(segment, "/"))
 			sb.WriteString("/")
-		} else {
-			sb.WriteString(strings.TrimLeft(segment, "/"))
 		}
 	}
 

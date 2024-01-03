@@ -1,8 +1,10 @@
-package xutil
+package xfile
 
-import "os"
+import (
+	"os"
+)
 
-func IsFileExist(path string) (bool, error) {
+func Exist(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
 		return true, nil
@@ -14,7 +16,7 @@ func IsFileExist(path string) (bool, error) {
 }
 
 func MkdirIfNotExist(path string) error {
-	exist, err := IsFileExist(path)
+	exist, err := Exist(path)
 	if err != nil {
 		return err
 	}

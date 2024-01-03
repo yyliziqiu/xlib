@@ -59,20 +59,28 @@ func WithBasicAuth(username string, password string) Option {
 	}
 }
 
+func WithBearerToken(token string) Option {
+	return func(api *API) {
+		api.requestFunc = func(req *http.Request) {
+			req.Header.Set("Authorization", "Bearer "+token)
+		}
+	}
+}
+
 func WithLogger(logger *logrus.Logger) Option {
 	return func(api *API) {
 		api.logger = logger
 	}
 }
 
-func WithLogDump(enabled bool) Option {
+func WithMaxLogLength(n int) Option {
 	return func(api *API) {
-		api.logDump = enabled
+		api.maxLogLength = n
 	}
 }
 
-func WithLogLengthMax(n int) Option {
+func WithDumpRawMessage(enabled bool) Option {
 	return func(api *API) {
-		api.logLengthMax = n
+		api.dumpRawMessage = enabled
 	}
 }

@@ -1,10 +1,12 @@
-package xutil
+package xsnapshot
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/yyliziqiu/xlib/xfile"
 )
 
 const snapshotTempExt = ".temp"
@@ -14,7 +16,7 @@ type Snapshot struct {
 	Data interface{}
 }
 
-func NewSnapshot(path string, data interface{}) *Snapshot {
+func New(path string, data interface{}) *Snapshot {
 	return &Snapshot{
 		Path: path,
 		Data: data,
@@ -26,7 +28,7 @@ func (s *Snapshot) Save() error {
 }
 
 func (s *Snapshot) SaveData(data interface{}) error {
-	err := MkdirIfNotExist(filepath.Dir(s.Path))
+	err := xfile.MkdirIfNotExist(filepath.Dir(s.Path))
 	if err != nil {
 		return fmt.Errorf("mkdir snapshot dir [%s] failed [%v]", filepath.Dir(s.Path), err)
 	}
@@ -54,7 +56,7 @@ func (s *Snapshot) Load() error {
 }
 
 func (s *Snapshot) LoadData(data interface{}) error {
-	ok, err := IsFileExist(s.Path)
+	ok, err := xfile.Exist(s.Path)
 	if err != nil {
 		return fmt.Errorf("check snapshot file [%s] failed [%v]", s.Path, err)
 	}

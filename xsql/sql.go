@@ -20,8 +20,8 @@ var (
 	loggerOnce sync.Once
 )
 
-func SetLogger(lg *logrus.Logger) {
-	logger = lg
+func SetLogger(lgg *logrus.Logger) {
+	logger = lgg
 }
 
 func GetLogger() *logrus.Logger {
@@ -30,7 +30,7 @@ func GetLogger() *logrus.Logger {
 	}
 	loggerOnce.Do(func() {
 		if logger == nil {
-			logger = xlog.MustNewLoggerByName("gorm")
+			logger = xlog.NewWithNameMust("gorm")
 		}
 	})
 	return logger

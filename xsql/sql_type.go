@@ -59,10 +59,15 @@ func (c *Config) Default() {
 }
 
 func (c Config) GORMConfig() *gorm.Config {
-	return &gorm.Config{Logger: gormlogger.New(GetLogger(), gormlogger.Config{
-		LogLevel:                  gormlogger.LogLevel(c.LogLevel), // Log level
-		SlowThreshold:             c.LogSlowThreshold,              // Slow SQL threshold
-		ParameterizedQueries:      c.LogParameterizedQueries,       // Don't include params in the SQL log
-		IgnoreRecordNotFoundError: c.LogIgnoreRecordNotFoundError,  // Ignore ErrRecordNotFound error for logger
-	})}
+	return &gorm.Config{
+		Logger: gormlogger.New(
+			GetLogger(),
+			gormlogger.Config{
+				LogLevel:                  gormlogger.LogLevel(c.LogLevel), // Log level
+				SlowThreshold:             c.LogSlowThreshold,              // Slow SQL threshold
+				ParameterizedQueries:      c.LogParameterizedQueries,       // Don't include params in the SQL log
+				IgnoreRecordNotFoundError: c.LogIgnoreRecordNotFoundError,  // Ignore ErrRecordNotFound error for logger
+			},
+		),
+	}
 }

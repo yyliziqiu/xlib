@@ -53,10 +53,10 @@ var (
 
 func setGinWriter(config Config) {
 	if errorLogger == nil {
-		errorLogger = xlog.MustNewLoggerByName(config.ErrorLogName)
+		errorLogger = xlog.NewWithNameMust(config.ErrorLogName)
 	}
 	if accessLogger == nil && !config.DisableAccessLog {
-		accessLogger = xlog.MustNewLoggerByName(config.AccessLogName)
+		accessLogger = xlog.NewWithNameMust(config.AccessLogName)
 	}
 
 	gin.DefaultErrorWriter = errorLogger.Writer()

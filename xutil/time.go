@@ -56,30 +56,3 @@ func ManualDuration(du time.Duration) string {
 
 	return strconv.FormatFloat(d, 'f', 2, 64) + timeUnit[i]
 }
-
-func Timestamp2String(ts int64) string {
-	return time.Unix(ts, 0).Format("2006-01-02 15:04:05")
-}
-
-func String2Timestamp(timeString string) (int64, error) {
-	t, err := time.Parse("2006-01-02 15:04:05", timeString)
-	if err != nil {
-		return 0, err
-	}
-	return t.Unix(), nil
-}
-
-func GetTimestampOfDay(ts int64) int64 {
-	t := time.Unix(ts, 0)
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local).Unix()
-}
-
-func GetTimestampOfMonth(ts int64) int64 {
-	t := time.Unix(ts, 0)
-	return time.Date(t.Year(), t.Month(), 0, 0, 0, 0, 0, time.Local).Unix()
-}
-
-func GetTimestampOfYear(ts int64) int64 {
-	t := time.Unix(ts, 0)
-	return time.Date(t.Year(), 0, 0, 0, 0, 0, 0, time.Local).Unix()
-}

@@ -1,11 +1,9 @@
 package xlog
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
@@ -13,35 +11,27 @@ import (
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 
-	"github.com/yyliziqiu/xlib/xutil"
+	"github.com/yyliziqiu/xlib/xfile"
 )
 
 var (
 	defaultConfig Config
 
-	HTTP *logrus.Logger
+	Default *logrus.Logger
 
 	Console *logrus.Logger
-
-	Default *logrus.Logger
 )
 
-func Init(config Config) error {
-	var err error
+func Init(config Config) (err error) {
 	defaultConfig = config
 	defaultConfig.Default()
 
-	HTTP, err = NewLoggerByName("http")
+	Default, err = New(defaultConfig)
 	if err != nil {
 		return err
 	}
 
-	Console, err = NewConsoleLogger(Config{Level: "debug", EnableCaller: true})
-	if err != nil {
-		return err
-	}
-
-	Default, err = NewLogger(defaultConfig)
+	Console, err = NewWithConsole(defaultConfig)
 	if err != nil {
 		return err
 	}
@@ -49,89 +39,60 @@ func Init(config Config) error {
 	return nil
 }
 
-func NewLoggerByName(name string) (*logrus.Logger, error) {
-	config := defaultConfig
-	config.Name = name
-	return NewLogger(config)
-}
-
-func NewLogger(config Config) (*logrus.Logger, error) {
+func New(config Config) (*logrus.Logger, error) {
 	if config.Console {
-		return NewConsoleLogger(config)
+		return NewWithConsole(config)
 	}
-	return NewFileLogger(config)
+	return NewWithFile(config)
 }
 
-func NewConsoleLogger(config Config) (*logrus.Logger, error) {
+func NewWithConsole(config Config) (*logrus.Logger, error) {
 	logger := logrus.New()
 
 	// 禁止输出方法名
 	logger.SetReportCaller(config.EnableCaller)
 
 	// 设置日志等级
-	logger.SetLevel(getLevel(config.Level))
+	logger.SetLevel(level(config.Level))
 
 	// 设置日志格式
-	logger.SetFormatter(getFormatter(config))
+	logger.SetFormatter(formatter(config))
 
 	return logger, nil
 }
 
-func getLevel(name string) logrus.Level {
-	level, err := logrus.ParseLevel(name)
+func level(name string) logrus.Level {
+	lvl, err := logrus.ParseLevel(name)
 	if err != nil {
 		return logrus.DebugLevel
 	}
-	return level
+	return lvl
 }
 
-func getFormatter(config Config) logrus.Formatter {
+func formatter(config Config) logrus.Formatter {
 	var (
-		formatter        = config.Formatter
-		timestampFormat  = config.TimestampFormat
-		callerPrettyfier = getCallerPrettyfier(config.CallerFields, config.CallerIsFull)
+		formatterName   = config.Formatter
+		timestampFormat = config.TimestampFormat
 	)
 
 	if timestampFormat == "" {
 		timestampFormat = "2006-01-02 15:04:05"
 	}
 
-	switch formatter {
-	case "json":
+	switch formatterName {
+	case JSONFormatterName:
 		return &logrus.JSONFormatter{
-			TimestampFormat:  timestampFormat,
-			CallerPrettyfier: callerPrettyfier,
+			TimestampFormat: timestampFormat,
 		}
 	default:
 		return &logrus.TextFormatter{
-			DisableQuote:     true,
-			TimestampFormat:  timestampFormat,
-			CallerPrettyfier: callerPrettyfier,
+			DisableQuote:    true,
+			TimestampFormat: timestampFormat,
 		}
 	}
 }
 
-func getCallerPrettyfier(fields string, isFull bool) func(frame *runtime.Frame) (function string, file string) {
-	return func(frame *runtime.Frame) (string, string) {
-		function := frame.Function
-		filename := frame.File
-		if !isFull {
-			function = filepath.Base(function)
-			filename = filepath.Base(filename)
-		}
-
-		switch fields {
-		case fieldsAll:
-			return function, fmt.Sprintf("%s:%d", filename, frame.Line)
-		case fieldsFilename:
-			return "", fmt.Sprintf("%s:%d", filename, frame.Line)
-		default:
-			return function, ""
-		}
-	}
-}
-
-func NewFileLogger(config Config) (*logrus.Logger, error) {
+func NewWithFile(config Config) (*logrus.Logger, error) {
 	logger := logrus.New()
 
 	// 禁止控制台输出
@@ -141,7 +102,7 @@ func NewFileLogger(config Config) (*logrus.Logger, error) {
 	logger.SetReportCaller(config.EnableCaller)
 
 	// 设置日志等级
-	logger.SetLevel(getLevel(config.Level))
+	logger.SetLevel(level(config.Level))
 
 	// 日志按天分割
 	hook, err := getRotationHook(config)
@@ -159,10 +120,8 @@ func getRotationHook(config Config) (*lfshook.LfsHook, error) {
 		return newRotationHook0(config)
 	case 1:
 		return newRotationHook1(config)
-	case 2:
-		return newRotationHook2(config)
 	default:
-		return nil, errors.New("not support rotation level")
+		return newRotationHook2(config)
 	}
 }
 
@@ -175,37 +134,9 @@ func newRotationHook0(config Config) (*lfshook.LfsHook, error) {
 	)
 
 	// 确保日志目录存在
-	err := xutil.MkdirIfNotExist(path)
+	err := xfile.MkdirIfNotExist(config.Path)
 	if err != nil {
-		return nil, fmt.Errorf("create log dir failed [%v]", err)
-	}
-
-	// 美化日志文件名
-	if !strings.HasSuffix(name, "-") {
-		name = name + "-"
-	}
-
-	// 创建分割器
-	rotation, err := NewRotation(path, name+"%Y%m%d.log", maxAge, rotationTime)
-	if err != nil {
-		return nil, fmt.Errorf("create rotate failed [%v]", err)
-	}
-
-	return lfshook.NewHook(rotation, getFormatter(config)), nil
-}
-
-func newRotationHook1(config Config) (*lfshook.LfsHook, error) {
-	var (
-		name         = config.Name
-		path         = config.Path
-		maxAge       = config.MaxAge
-		rotationTime = config.RotationTime
-	)
-
-	// 确保日志目录存在
-	err := xutil.MkdirIfNotExist(config.Path)
-	if err != nil {
-		return nil, fmt.Errorf("create log dir failed [%v]", err)
+		return nil, fmt.Errorf("create logs dir failed [%v]", err)
 	}
 
 	// 美化日志文件名
@@ -230,7 +161,35 @@ func newRotationHook1(config Config) (*lfshook.LfsHook, error) {
 		logrus.ErrorLevel: errorRotation,
 		logrus.FatalLevel: errorRotation,
 		logrus.PanicLevel: errorRotation,
-	}, getFormatter(config)), nil
+	}, formatter(config)), nil
+}
+
+func newRotationHook1(config Config) (*lfshook.LfsHook, error) {
+	var (
+		name         = config.Name
+		path         = config.Path
+		maxAge       = config.MaxAge
+		rotationTime = config.RotationTime
+	)
+
+	// 确保日志目录存在
+	err := xfile.MkdirIfNotExist(path)
+	if err != nil {
+		return nil, fmt.Errorf("create logs dir failed [%v]", err)
+	}
+
+	// 美化日志文件名
+	if !strings.HasSuffix(name, "-") {
+		name = name + "-"
+	}
+
+	// 创建分割器
+	rotation, err := NewRotation(path, name+"%Y%m%d.log", maxAge, rotationTime)
+	if err != nil {
+		return nil, fmt.Errorf("create rotate failed [%v]", err)
+	}
+
+	return lfshook.NewHook(rotation, formatter(config)), nil
 }
 
 func newRotationHook2(config Config) (*lfshook.LfsHook, error) {
@@ -242,9 +201,9 @@ func newRotationHook2(config Config) (*lfshook.LfsHook, error) {
 	)
 
 	// 确保日志目录存在
-	err := xutil.MkdirIfNotExist(config.Path)
+	err := xfile.MkdirIfNotExist(config.Path)
 	if err != nil {
-		return nil, fmt.Errorf("create log dir failed [%v]", err)
+		return nil, fmt.Errorf("create logs dir failed [%v]", err)
 	}
 
 	// 美化日志文件名
@@ -277,15 +236,21 @@ func newRotationHook2(config Config) (*lfshook.LfsHook, error) {
 		logrus.ErrorLevel: errorRotation,
 		logrus.FatalLevel: errorRotation,
 		logrus.PanicLevel: errorRotation,
-	}, getFormatter(config)), nil
+	}, formatter(config)), nil
 }
 
 func NewRotation(dirname string, filename string, maxAge time.Duration, RotationTime time.Duration) (*rotate.RotateLogs, error) {
 	return rotate.New(filepath.Join(dirname, filename), rotate.WithMaxAge(maxAge), rotate.WithRotationTime(RotationTime))
 }
 
-func MustNewLoggerByName(name string) *logrus.Logger {
-	logger, err := NewLoggerByName(name)
+func NewWithName(name string) (*logrus.Logger, error) {
+	config := defaultConfig
+	config.Name = name
+	return New(config)
+}
+
+func NewWithNameMust(name string) *logrus.Logger {
+	logger, err := NewWithName(name)
 	if err != nil {
 		return Default
 	}

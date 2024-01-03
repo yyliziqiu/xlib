@@ -1,6 +1,9 @@
-package xutil
+package xconvert
 
-import "strconv"
+import (
+	"strconv"
+	"time"
+)
 
 func Int2String(i int) string {
 	return strconv.Itoa(i)
@@ -27,4 +30,16 @@ func String2Int64(s string) int64 {
 func String2Float64(s string) float64 {
 	f, _ := strconv.ParseFloat(s, 64)
 	return f
+}
+
+func Timestamp2String(ts int64) string {
+	return time.Unix(ts, 0).Format("2006-01-02 15:04:05")
+}
+
+func String2Timestamp(timeString string) (int64, error) {
+	t, err := time.Parse("2006-01-02 15:04:05", timeString)
+	if err != nil {
+		return 0, err
+	}
+	return t.Unix(), nil
 }

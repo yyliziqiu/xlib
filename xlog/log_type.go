@@ -3,12 +3,8 @@ package xlog
 import "time"
 
 const (
-	textFormatter = "text"
-	jsonFormatter = "json"
-
-	fieldsFilename = "filename"
-	fieldsFunction = "function"
-	fieldsAll      = "all"
+	TextFormatterName = "text"
+	JSONFormatterName = "json"
 )
 
 type Config struct {
@@ -21,8 +17,6 @@ type Config struct {
 	RotationLevel   int
 	Formatter       string
 	EnableCaller    bool
-	CallerFields    string
-	CallerIsFull    bool
 	TimestampFormat string
 }
 
@@ -43,10 +37,7 @@ func (c *Config) Default() {
 		c.RotationTime = 24 * time.Hour
 	}
 	if c.Formatter == "" {
-		c.Formatter = textFormatter
-	}
-	if c.CallerFields == "" {
-		c.CallerFields = fieldsFunction
+		c.Formatter = TextFormatterName
 	}
 	if c.TimestampFormat == "" {
 		c.TimestampFormat = "2006-01-02 15:04:05"

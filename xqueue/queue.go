@@ -1,4 +1,4 @@
-package xutil
+package xqueue
 
 import (
 	"errors"
@@ -7,6 +7,8 @@ import (
 	"sync"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/yyliziqiu/xlib/xsnapshot"
 )
 
 var (
@@ -19,7 +21,7 @@ type Queue struct {
 	step     int
 	debug    bool
 	logger   *logrus.Logger
-	snapshot *Snapshot
+	snapshot *xsnapshot.Snapshot
 
 	list []interface{}
 	head int
@@ -27,18 +29,18 @@ type Queue struct {
 	mu   sync.RWMutex
 }
 
-func NewQueue(n int) *Queue {
-	return NewQueueWithSnapshot(n, "")
+func New(n int) *Queue {
+	return NewWithSnapshot(n, "")
 }
 
-func NewQueueWithSnapshot(n int, path string) *Queue {
+func NewWithSnapshot(n int, path string) *Queue {
 	if n <= 0 {
 		n = 1024
 	}
 
 	q := &Queue{
 		step:     n,
-		snapshot: NewSnapshot(path, ""),
+		snapshot: xsnapshot.New(path, nil),
 	}
 
 	q.list = make([]interface{}, n+1)

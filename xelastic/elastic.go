@@ -24,7 +24,7 @@ func GetLogger() *logrus.Logger {
 	}
 	loggerOnce.Do(func() {
 		if logger == nil {
-			logger = xlog.MustNewLoggerByName("es")
+			logger = xlog.NewWithNameMust("elastic")
 		}
 	})
 	return logger
@@ -56,9 +56,9 @@ func Init(cfs ...Config) error {
 }
 
 func NewClient(config Config) (*elastic.Client, error) {
-	var lg elastic.Logger
+	var lgg elastic.Logger
 	if config.EnableLog {
-		lg = GetLogger()
+		lgg = GetLogger()
 	}
 
 	return elastic.NewClient(
@@ -66,9 +66,9 @@ func NewClient(config Config) (*elastic.Client, error) {
 		elastic.SetBasicAuth(config.Username, config.Password),
 		elastic.SetSniff(false),
 		elastic.SetHealthcheck(false),
-		elastic.SetTraceLog(lg),
-		elastic.SetInfoLog(lg),
-		elastic.SetErrorLog(lg),
+		elastic.SetInfoLog(lgg),
+		elastic.SetTraceLog(lgg),
+		elastic.SetErrorLog(lgg),
 	)
 }
 

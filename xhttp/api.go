@@ -13,6 +13,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/yyliziqiu/xlib/xurl"
 	"github.com/yyliziqiu/xlib/xutil"
 )
 
@@ -22,28 +23,28 @@ const (
 )
 
 type API struct {
-	client        *http.Client
-	baseURL       string
-	resType       string                  // 如果值为 json，则会自动将响应数据反序列化
-	resTypeStrict bool                    // 在 ResType != "text" 时有效，此时会根据 ResType 校验 Content-Type
-	errorStruct   interface{}             // 不能是指针
-	requestFunc   func(req *http.Request) // 在发送请求前调用，可以用来设置 basic auth
-	logger        *logrus.Logger          // 如果为 nil，则不记录日志
-	logLengthMax  int                     // 日志最大长度
-	logDump       bool                    // 将 HTTP 报文打印到控制台，调试用
+	client         *http.Client
+	baseURL        string
+	resType        string                  // 如果值为 json，则会自动将响应数据反序列化
+	resTypeStrict  bool                    // 在 ResType != "text" 时有效，此时会根据 ResType 校验 Content-Type
+	errorStruct    interface{}             // 不能是指针
+	requestFunc    func(req *http.Request) // 在发送请求前调用，可以用来设置 basic auth
+	logger         *logrus.Logger          // 如果为 nil，则不记录日志
+	maxLogLength   int                     // 日志最大长度
+	dumpRawMessage bool                    // 将 HTTP 报文打印到控制台，调试用
 }
 
 func NewAPI(options ...Option) *API {
 	api := &API{
-		client:        &http.Client{Timeout: 5 * time.Second},
-		baseURL:       "",
-		resType:       ResTypeJSON,
-		resTypeStrict: false,
-		errorStruct:   nil,
-		requestFunc:   nil,
-		logger:        nil,
-		logLengthMax:  1024,
-		logDump:       false,
+		client:         &http.Client{Timeout: 5 * time.Second},
+		baseURL:        "",
+		resType:        ResTypeJSON,
+		resTypeStrict:  false,
+		errorStruct:    nil,
+		requestFunc:    nil,
+		logger:         nil,
+		maxLogLength:   1024,
+		dumpRawMessage: false,
 	}
 
 	for _, option := range options {
@@ -54,13 +55,13 @@ func NewAPI(options ...Option) *API {
 }
 
 func (a *API) truncateLog(log string) string {
-	if a.logLengthMax <= 0 {
+	if a.maxLogLength <= 0 {
 		return ""
 	}
-	if len(log) <= a.logLengthMax {
+	if len(log) <= a.maxLogLength {
 		return log
 	}
-	return log[:a.logLengthMax]
+	return log[:a.maxLogLength]
 }
 
 func (a *API) logInfo(format string, args ...interface{}) {
@@ -82,7 +83,7 @@ func (a *API) logWarn(format string, args ...interface{}) {
 }
 
 func (a *API) dumpRequest(req *http.Request) {
-	if !a.logDump {
+	if !a.dumpRawMessage {
 		return
 	}
 
@@ -98,7 +99,7 @@ func (a *API) dumpRequest(req *http.Request) {
 }
 
 func (a *API) dumpResponse(res *http.Response) {
-	if !a.logDump {
+	if !a.dumpRawMessage {
 		return
 	}
 
@@ -144,7 +145,10 @@ func (a *API) url(path string) string {
 		strings.HasPrefix(path, "https://") {
 		return path
 	}
-	return xutil.JoinURL(a.baseURL, path)
+	if path == "" {
+		return a.baseURL
+	}
+	return xurl.Join(a.baseURL, path)
 }
 
 func (a *API) doRequest(req *http.Request) (*http.Response, error) {
