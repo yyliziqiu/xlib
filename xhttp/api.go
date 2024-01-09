@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"reflect"
 	"strings"
 	"time"
 
@@ -201,8 +202,8 @@ func (a *API) handleJSONResponse(statusCode int, body []byte, out interface{}) e
 	} else {
 		var ret interface{}
 		if a.errorStruct != nil {
-			ret = a.errorStruct
-			err := json.Unmarshal(body, &ret)
+			ret = reflect.New(reflect.TypeOf(a.errorStruct)).Interface()
+			err := json.Unmarshal(body, ret)
 			if err != nil {
 				return fmt.Errorf("unmarshal response [%s] failed [%v]", string(body), err)
 			}
