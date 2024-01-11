@@ -67,7 +67,7 @@ func runSave(ctx context.Context, persistence Persistence) {
 			_ = save(persistence)
 		case <-ctx.Done():
 			_ = save(persistence)
-			Logger.Infof("Save snapshot exit, name: %s.", persistence.Name())
+			// Logger.Infof("Save snapshot exit, name: %s.", persistence.Name())
 			return
 		}
 	}
