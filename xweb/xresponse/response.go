@@ -17,30 +17,51 @@ var (
 	InternalServerErrorError = xerror.New("B0500", "Internal Server Error")
 )
 
-type responseError struct {
+type ErrorResult struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 }
 
-func newResponseError(err *xerror.Error) responseError {
-	return responseError{
-		Code:    err.Code,
-		Message: err.Message,
+func NewErrorResult(code string, message string) ErrorResult {
+	return ErrorResult{
+		Code:    code,
+		Message: message,
 	}
 }
 
-func buildErrorResponse(err error) (int, responseError) {
-	e, ok := err.(*xerror.Error)
-	if !ok {
-		e = BadRequestError
+func NewErrorResultWithError(err error) ErrorResult {
+	xerr, ok := err.(*xerror.Error)
+	if ok {
+		return NewErrorResult(xerr.Code, xerr.Message)
+	}
+	return NewErrorResult(BadRequestError.Code, err.Error())
+}
+
+func buildErrorResponse(err error) (int, ErrorResult) {
+	var (
+		statusCode = http.StatusBadRequest
+		code       = BadRequestError.Code
+		message    = err.Error()
+	)
+
+	xerr, ok := err.(*xerror.Error)
+	if ok {
+		if xerr.Code[0] != 'A' {
+			statusCode = http.StatusInternalServerError
+		}
+		code = xerr.Code
+		message = xerr.Message
 	}
 
-	statusCode := http.StatusBadRequest
-	if e.Code[0] != 'A' {
-		statusCode = http.StatusInternalServerError
-	}
+	return statusCode, NewErrorResult(code, message)
+}
 
-	return statusCode, newResponseError(e)
+func Response(ctx *gin.Context, statusCode int, data interface{}) {
+	ctx.JSON(statusCode, data)
+}
+
+func ResponseError(ctx *gin.Context, statusCode int, code string, message string) {
+	ctx.JSON(statusCode, NewErrorResult(code, message))
 }
 
 func OK(ctx *gin.Context) {
@@ -52,13 +73,12 @@ func Result(ctx *gin.Context, data interface{}) {
 }
 
 func Error(ctx *gin.Context, err error) {
-	statusCode, responseErr := buildErrorResponse(err)
-	ctx.JSON(statusCode, responseErr)
+	statusCode, result := buildErrorResponse(err)
+	ctx.JSON(statusCode, result)
 }
 
 func ErrorString(ctx *gin.Context, message string) {
-	statusCode, responseErr := buildErrorResponse(BadRequestError.With(message))
-	ctx.JSON(statusCode, responseErr)
+	ctx.JSON(http.StatusBadRequest, NewErrorResult(BadRequestError.Code, message))
 }
 
 func AbortOK(ctx *gin.Context) {
@@ -70,35 +90,34 @@ func AbortResult(ctx *gin.Context, data interface{}) {
 }
 
 func AbortError(ctx *gin.Context, err error) {
-	statusCode, responseErr := buildErrorResponse(err)
-	ctx.AbortWithStatusJSON(statusCode, responseErr)
+	statusCode, result := buildErrorResponse(err)
+	ctx.AbortWithStatusJSON(statusCode, result)
 }
 
 func AbortErrorString(ctx *gin.Context, message string) {
-	statusCode, responseErr := buildErrorResponse(BadRequestError.With(message))
-	ctx.AbortWithStatusJSON(statusCode, responseErr)
+	ctx.AbortWithStatusJSON(http.StatusBadRequest, NewErrorResult(BadRequestError.Code, message))
 }
 
 func AbortBadRequest(ctx *gin.Context) {
-	ctx.AbortWithStatusJSON(http.StatusBadRequest, newResponseError(BadRequestError))
+	ctx.AbortWithStatusJSON(http.StatusBadRequest, NewErrorResultWithError(BadRequestError))
 }
 
 func AbortUnauthorized(ctx *gin.Context) {
-	ctx.AbortWithStatusJSON(http.StatusUnauthorized, newResponseError(UnauthorizedError))
+	ctx.AbortWithStatusJSON(http.StatusUnauthorized, NewErrorResultWithError(UnauthorizedError))
 }
 
 func AbortForbidden(ctx *gin.Context) {
-	ctx.AbortWithStatusJSON(http.StatusForbidden, newResponseError(ForbiddenError))
+	ctx.AbortWithStatusJSON(http.StatusForbidden, NewErrorResultWithError(ForbiddenError))
 }
 
 func AbortNotFound(ctx *gin.Context) {
-	ctx.AbortWithStatusJSON(http.StatusNotFound, newResponseError(NotFoundError))
+	ctx.AbortWithStatusJSON(http.StatusNotFound, NewErrorResultWithError(NotFoundError))
 }
 
 func AbortMethodNotAllowed(ctx *gin.Context) {
-	ctx.AbortWithStatusJSON(http.StatusMethodNotAllowed, newResponseError(MethodNotAllowedError))
+	ctx.AbortWithStatusJSON(http.StatusMethodNotAllowed, NewErrorResultWithError(MethodNotAllowedError))
 }
 
 func AbortInternalServerError(ctx *gin.Context) {
-	ctx.AbortWithStatusJSON(http.StatusInternalServerError, newResponseError(InternalServerErrorError))
+	ctx.AbortWithStatusJSON(http.StatusInternalServerError, NewErrorResultWithError(InternalServerErrorError))
 }
