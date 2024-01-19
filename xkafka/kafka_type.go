@@ -1,5 +1,9 @@
 package xkafka
 
+import (
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+)
+
 const (
 	DefaultId = "default"
 
@@ -21,8 +25,10 @@ type Config struct {
 	SslCaLocation    string // optional
 
 	// producer
-	RequiredAcks int    // optional
-	Topic        string // must
+	RequiredAcks          int                        // optional
+	Topic                 string                     // must
+	DeliveredCallback     func(kafka.TopicPartition) // optional
+	DeliverFailedCallback func(kafka.TopicPartition) // optional
 
 	// consumer
 	Topics            []string // must
