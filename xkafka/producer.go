@@ -10,20 +10,18 @@ import (
 func NewProducer(config Config) (*kafka.Producer, error) {
 	conf := &kafka.ConfigMap{
 		"bootstrap.servers":     config.BootstrapServers,
-		"request.required.acks": config.RequiredAcks,
+		"request.required.acks": config.RequestRequiredAcks,
 	}
 
-	if config.SecurityRequired {
+	if config.SecurityProtocol != "" {
+		_ = conf.SetKey("security.protocol", config.SecurityProtocol)
 		switch config.SecurityProtocol {
 		case "plaintext":
-			_ = conf.SetKey("security.protocol", config.SecurityProtocol)
 		case "sasl_plaintext":
-			_ = conf.SetKey("security.protocol", config.SecurityProtocol)
 			_ = conf.SetKey("sasl.username", config.SaslUsername)
 			_ = conf.SetKey("sasl.password", config.SaslPassword)
 			_ = conf.SetKey("sasl.mechanism", config.SaslMechanism)
 		case "sasl_ssl":
-			_ = conf.SetKey("security.protocol", config.SecurityProtocol)
 			_ = conf.SetKey("sasl.username", config.SaslUsername)
 			_ = conf.SetKey("sasl.password", config.SaslPassword)
 			_ = conf.SetKey("sasl.mechanism", config.SaslMechanism)

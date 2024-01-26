@@ -15,7 +15,7 @@ const (
 
 type Config struct {
 	Id   string // optional
-	Mode string // must
+	Mode string // optional
 
 	// 单机模式
 	Addr string // must
@@ -49,6 +49,12 @@ type Config struct {
 func (c *Config) Default() {
 	if c.Id == "" {
 		c.Id = DefaultId
+	}
+	if c.Mode == "" {
+		c.Mode = ModeSingle
+	}
+	if c.Addr == "" {
+		c.Addr = "127.0.0.1:6379"
 	}
 	if c.MaxRetries == 0 {
 		c.MaxRetries = 3

@@ -25,20 +25,19 @@ func StartOnceTasks(ctx context.Context, tasksFunc func() []OnceTask) {
 func StartOnceTasksWithConfig(ctx context.Context, tasksFunc func() []OnceTask, configs []OnceTask) {
 	tasks := tasksFunc()
 
-	ConfigOnceTasks(&tasks, configs)
+	ConfigOnceTasks(tasks, configs)
 
 	StartOnceTasks(ctx, func() []OnceTask { return tasks })
 }
 
-func ConfigOnceTasks(tasks *[]OnceTask, configs []OnceTask) {
+func ConfigOnceTasks(tasks []OnceTask, configs []OnceTask) {
 	index := make(map[string]OnceTask, len(configs))
 	for _, config := range configs {
 		index[config.Name] = config
 	}
-
-	for i := 0; i < len(*tasks); i++ {
-		if config, ok := index[(*tasks)[i].Name]; ok {
-			(*tasks)[i].GON = config.GON
+	for i := 0; i < len(tasks); i++ {
+		if config, ok := index[tasks[i].Name]; ok {
+			tasks[i].GON = config.GON
 		}
 	}
 }

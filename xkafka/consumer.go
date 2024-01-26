@@ -10,25 +10,23 @@ func NewConsumer(config Config) (*kafka.Consumer, error) {
 	var conf = &kafka.ConfigMap{
 		"bootstrap.servers":         config.BootstrapServers,
 		"group.id":                  config.GroupId,
-		"auto.offset.reset":         config.OffsetReset,
-		"max.poll.interval.ms":      config.PollInterval,
-		"session.timeout.ms":        config.SessionTimeout,
-		"heartbeat.interval.ms":     config.HeartbeatInterval,
-		"fetch.max.bytes":           config.FetchMax,
-		"max.partition.fetch.bytes": config.PartitionFetchMax,
+		"auto.offset.reset":         config.AutoOffsetReset,
+		"max.poll.interval.ms":      config.MaxPollIntervalMS,
+		"session.timeout.ms":        config.SessionTimeoutMS,
+		"heartbeat.interval.ms":     config.HeartbeatIntervalMS,
+		"fetch.max.bytes":           config.FetchMaxBytes,
+		"max.partition.fetch.bytes": config.MaxPartitionFetchBytes,
 	}
 
-	if config.SecurityRequired {
+	if config.SecurityProtocol != "" {
+		_ = conf.SetKey("security.protocol", config.SecurityProtocol)
 		switch config.SecurityProtocol {
 		case "plaintext":
-			_ = conf.SetKey("security.protocol", config.SecurityProtocol)
 		case "sasl_plaintext":
-			_ = conf.SetKey("security.protocol", config.SecurityProtocol)
 			_ = conf.SetKey("sasl.username", config.SaslUsername)
 			_ = conf.SetKey("sasl.password", config.SaslPassword)
 			_ = conf.SetKey("sasl.mechanism", config.SaslMechanism)
 		case "sasl_ssl":
-			_ = conf.SetKey("security.protocol", config.SecurityProtocol)
 			_ = conf.SetKey("sasl.username", config.SaslUsername)
 			_ = conf.SetKey("sasl.password", config.SaslPassword)
 			_ = conf.SetKey("sasl.mechanism", config.SaslMechanism)

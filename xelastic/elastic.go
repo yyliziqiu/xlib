@@ -67,8 +67,8 @@ func NewClient(config Config) (*elastic.Client, error) {
 		elastic.SetSniff(false),
 		elastic.SetHealthcheck(false),
 		elastic.SetInfoLog(lgg),
-		elastic.SetTraceLog(lgg),
 		elastic.SetErrorLog(lgg),
+		elastic.SetTraceLog(lgg),
 	)
 }
 

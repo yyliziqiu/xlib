@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"reflect"
 	"strings"
@@ -19,33 +18,31 @@ import (
 )
 
 const (
-	ResTypeJSON = "json"
-	ResTypeText = "text"
+	FormatJSON = "json"
+	FormatText = "text"
 )
 
 type API struct {
-	client         *http.Client
-	baseURL        string
-	resType        string                  // 如果值为 json，则会自动将响应数据反序列化
-	resTypeStrict  bool                    // 在 ResType != "text" 时有效，此时会根据 ResType 校验 Content-Type
-	errorStruct    interface{}             // 不能是指针
-	requestFunc    func(req *http.Request) // 在发送请求前调用，可以用来设置 basic auth
-	logger         *logrus.Logger          // 如果为 nil，则不记录日志
-	maxLogLength   int                     // 日志最大长度
-	dumpRawMessage bool                    // 将 HTTP 报文打印到控制台，调试用
+	client      *http.Client
+	format      string
+	baseURL     string
+	errorStruct interface{}             // 不能是指针
+	requestFunc func(req *http.Request) // 在发送请求前调用，可以用来设置 basic auth
+	logger      *logrus.Logger          // 如果为 nil，则不记录日志
+	logLength   int                     // 日志最大长度
+	dump        bool                    // 将 HTTP 报文打印到控制台，调试用
 }
 
-func NewAPI(options ...Option) *API {
+func New(options ...Option) *API {
 	api := &API{
-		client:         &http.Client{Timeout: 5 * time.Second},
-		baseURL:        "",
-		resType:        ResTypeJSON,
-		resTypeStrict:  false,
-		errorStruct:    nil,
-		requestFunc:    nil,
-		logger:         nil,
-		maxLogLength:   1024,
-		dumpRawMessage: false,
+		client:      &http.Client{Timeout: 5 * time.Second},
+		baseURL:     "",
+		format:      FormatJSON,
+		errorStruct: nil,
+		requestFunc: nil,
+		logger:      nil,
+		logLength:   1024,
+		dump:        false,
 	}
 
 	for _, option := range options {
@@ -55,76 +52,21 @@ func NewAPI(options ...Option) *API {
 	return api
 }
 
-func (a *API) truncateLog(log string) string {
-	if a.maxLogLength <= 0 {
-		return ""
-	}
-	if len(log) <= a.maxLogLength {
-		return log
-	}
-	return log[:a.maxLogLength]
+// Deprecated: Use New instead.
+func NewAPI(options ...Option) *API {
+	return New(options...)
 }
 
-func (a *API) logInfo(format string, args ...interface{}) {
-	if a.logger == nil {
-		return
-	}
-	log := fmt.Sprintf(format, args...)
-	log = a.truncateLog(log)
-	a.logger.Info(log)
-}
-
-func (a *API) logWarn(format string, args ...interface{}) {
-	if a.logger == nil {
-		return
-	}
-	log := fmt.Sprintf(format, args...)
-	log = a.truncateLog(log)
-	a.logger.Warn(log)
-}
-
-func (a *API) dumpRequest(req *http.Request) {
-	if !a.dumpRawMessage {
-		return
-	}
-
-	bs, err := httputil.DumpRequestOut(req, true)
+func (api *API) newRequest(method string, path string, query url.Values, header http.Header, body io.Reader) (*http.Request, error) {
+	rawURL, err := AppendQuery(api.url(path), query)
 	if err != nil {
-		fmt.Printf("Dump request failed, error: %v\n", err)
-		return
-	}
-
-	fmt.Println("\n---------- Request ----------")
-	fmt.Printf(string(bs))
-	fmt.Println("\n---------- Request End----------")
-}
-
-func (a *API) dumpResponse(res *http.Response) {
-	if !a.dumpRawMessage {
-		return
-	}
-
-	bs, err := httputil.DumpResponse(res, true)
-	if err != nil {
-		fmt.Printf("Dump response failed, error: %v", err)
-		return
-	}
-
-	fmt.Println("\n---------- Response ----------")
-	fmt.Printf(string(bs))
-	fmt.Println("\n---------- Response End----------")
-}
-
-func (a *API) newRequest(method string, path string, query url.Values, header http.Header, body io.Reader) (*http.Request, error) {
-	rawURL, err := AppendQuery(a.url(path), query)
-	if err != nil {
-		a.logWarn("Append query failed, URL: %s, Query: %v, Error: %v.", rawURL, query, err)
+		api.logWarn("Append query failed, URL: %s, Query: %v, Error: %v.", rawURL, query, err)
 		return nil, fmt.Errorf("append query failed [%v]", err)
 	}
 
 	req, err := http.NewRequest(method, rawURL, body)
 	if err != nil {
-		a.logWarn("New Request failed, URL: %s, Error: %v.", rawURL, err)
+		api.logWarn("New Request failed, URL: %s, Error: %v.", rawURL, err)
 		return nil, fmt.Errorf("new request failed [%v]", err)
 	}
 
@@ -134,59 +76,53 @@ func (a *API) newRequest(method string, path string, query url.Values, header ht
 		}
 	}
 
-	if a.requestFunc != nil {
-		a.requestFunc(req)
+	if api.requestFunc != nil {
+		api.requestFunc(req)
 	}
 
 	return req, nil
 }
 
-func (a *API) url(path string) string {
+func (api *API) url(path string) string {
 	if strings.HasPrefix(path, "http://") ||
 		strings.HasPrefix(path, "https://") {
 		return path
 	}
 	if path == "" {
-		return a.baseURL
+		return api.baseURL
 	}
-	return xurl.Join(a.baseURL, path)
+	return xurl.Join(api.baseURL, path)
 }
 
-func (a *API) doRequest(req *http.Request) (*http.Response, error) {
-	a.dumpRequest(req)
-	res, err := a.client.Do(req)
+func (api *API) doRequest(req *http.Request) (*http.Response, error) {
+	api.dumpRequest(req)
+
+	res, err := api.client.Do(req)
 	if err != nil {
-		a.logWarn("Do Request failed, URL: %s, Error: %v.", req.URL, err)
+		api.logWarn("Do Request failed, URL: %s, Error: %v.", req.URL, err)
 		return nil, err
 	}
+
 	return res, nil
 }
 
-func (a *API) handleResponse(res *http.Response, out interface{}) ([]byte, error) {
-	a.dumpResponse(res)
+func (api *API) handleResponse(res *http.Response, out interface{}) ([]byte, error) {
+	api.dumpResponse(res)
+
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read response failed [%v]", err)
 	}
 
-	statusCode := res.StatusCode
-	contentType := strings.ToLower(res.Header.Get("Content-Type"))
-
-	switch a.resType {
-	case ResTypeJSON:
-		if a.resTypeStrict && !strings.Contains(contentType, "application/json") {
-			return nil, fmt.Errorf(
-				"response content type is not application/json, status code [%d], content type [%s], content [%s]",
-				res.StatusCode, res.Header.Get("Content-Type"), string(body),
-			)
-		}
-		return body, a.handleJSONResponse(statusCode, body, out)
+	switch api.format {
+	case FormatText:
+		return body, api.handleTextResponse(res.StatusCode, body, out)
 	default:
-		return body, a.handleTextResponse(statusCode, body, out)
+		return body, api.handleJSONResponse(res.StatusCode, body, out)
 	}
 }
 
-func (a *API) handleJSONResponse(statusCode int, body []byte, out interface{}) error {
+func (api *API) handleJSONResponse(statusCode int, body []byte, out interface{}) error {
 	if statusCode/100 == 2 {
 		if out != nil {
 			err := json.Unmarshal(body, out)
@@ -201,8 +137,8 @@ func (a *API) handleJSONResponse(statusCode int, body []byte, out interface{}) e
 		}
 	} else {
 		var ret interface{}
-		if a.errorStruct != nil {
-			ret = reflect.New(reflect.TypeOf(a.errorStruct)).Interface()
+		if api.errorStruct != nil {
+			ret = reflect.New(reflect.TypeOf(api.errorStruct)).Interface()
 			err := json.Unmarshal(body, ret)
 			if err != nil {
 				return fmt.Errorf("unmarshal response [%s] failed [%v]", string(body), err)
@@ -219,7 +155,7 @@ func (a *API) handleJSONResponse(statusCode int, body []byte, out interface{}) e
 	return nil
 }
 
-func (a *API) handleTextResponse(statusCode int, body []byte, out interface{}) error {
+func (api *API) handleTextResponse(statusCode int, body []byte, out interface{}) error {
 	if statusCode/100 != 2 {
 		return newResponseError(statusCode, string(body), nil)
 	}
@@ -237,9 +173,9 @@ func (a *API) handleTextResponse(statusCode int, body []byte, out interface{}) e
 	return nil
 }
 
-func (a *API) Get(path string, query url.Values, header http.Header, out interface{}) error {
+func (api *API) Get(path string, query url.Values, header http.Header, out interface{}) error {
 	//  创建请求
-	req, err := a.newRequest(http.MethodGet, path, query, header, nil)
+	req, err := api.newRequest(http.MethodGet, path, query, header, nil)
 	if err != nil {
 		return err
 	}
@@ -248,32 +184,33 @@ func (a *API) Get(path string, query url.Values, header http.Header, out interfa
 	timer := xutil.NewTimer()
 
 	// 发送请求
-	res, err := a.doRequest(req)
+	res, err := api.doRequest(req)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
 
 	// 解析并返回响应结果
-	body, err := a.handleResponse(res, out)
+	body, err := api.handleResponse(res, out)
 	if err != nil {
-		a.logWarn("Response failed, URL: %s, Header: %v, Error: %v, Cost: %s.", req.URL, header, err, timer.Stops())
+		api.logWarn("Response failed, URL: %s, header: %s, error: %v, cost: %s.", req.URL, H2S(header), err, timer.Stops())
 	} else {
-		a.logInfo("Response succeed, URL: %s, Header: %v, Response: %v, Cost: %s.", req.URL, header, body, timer.Stops())
+		api.logInfo("Response succeed, URL: %s, header: %s, response: %s, cost: %s.", req.URL, H2S(header), string(body), timer.Stops())
 	}
 
 	return err
 }
 
-func (a *API) PostForm(path string, query url.Values, header http.Header, in url.Values, out interface{}) error {
+func (api *API) PostForm(path string, query url.Values, header http.Header, in url.Values, out interface{}) error {
 	reqBody := in.Encode()
-	logBody, err := url.QueryUnescape(reqBody)
+
+	forlog, err := url.QueryUnescape(reqBody)
 	if err != nil {
-		logBody = reqBody
+		forlog = reqBody
 	}
 
 	// 创建请求
-	req, err := a.newRequest(http.MethodPost, path, query, header, strings.NewReader(reqBody))
+	req, err := api.newRequest(http.MethodPost, path, query, header, strings.NewReader(reqBody))
 	if err != nil {
 		return err
 	}
@@ -285,24 +222,24 @@ func (a *API) PostForm(path string, query url.Values, header http.Header, in url
 	timer := xutil.NewTimer()
 
 	// 发送请求
-	res, err := a.doRequest(req)
+	res, err := api.doRequest(req)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
 
 	// 解析并返回响应结果
-	resBody, err := a.handleResponse(res, out)
+	resBody, err := api.handleResponse(res, out)
 	if err != nil {
-		a.logWarn("Response failed, URL: %s, Header: %v, Request: %s, Error: %v, Cost: %s.", req.URL, header, logBody, err, timer.Stops())
+		api.logWarn("Response failed, URL: %s, header: %s, request: %s, error: %v, cost: %s.", req.URL, H2S(header), forlog, err, timer.Stops())
 	} else {
-		a.logInfo("Response succeed, URL: %s, Header: %v, Request: %s, Response: %v, Cost: %s.", req.URL, header, logBody, string(resBody), timer.Stops())
+		api.logInfo("Response succeed, URL: %s, header: %s, request: %s, response: %s, cost: %s.", req.URL, H2S(header), forlog, string(resBody), timer.Stops())
 	}
 
 	return err
 }
 
-func (a *API) PostJSON(path string, query url.Values, header http.Header, in interface{}, out interface{}) error {
+func (api *API) PostJSON(path string, query url.Values, header http.Header, in interface{}, out interface{}) error {
 	// JSON 序列化
 	if in == nil {
 		in = struct{}{}
@@ -313,7 +250,7 @@ func (a *API) PostJSON(path string, query url.Values, header http.Header, in int
 	}
 
 	// 创建请求
-	req, err := a.newRequest(http.MethodPost, path, query, header, bytes.NewReader(reqBody))
+	req, err := api.newRequest(http.MethodPost, path, query, header, bytes.NewReader(reqBody))
 	if err != nil {
 		return err
 	}
@@ -325,18 +262,18 @@ func (a *API) PostJSON(path string, query url.Values, header http.Header, in int
 	timer := xutil.NewTimer()
 
 	// 发送请求
-	res, err := a.doRequest(req)
+	res, err := api.doRequest(req)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
 
 	// 解析并返回响应结果
-	resBody, err := a.handleResponse(res, out)
+	resBody, err := api.handleResponse(res, out)
 	if err != nil {
-		a.logWarn("Response failed, URL: %s, Header: %v, Request: %s, Error: %v, Cost: %s.", req.URL, header, string(reqBody), err, timer.Stops())
+		api.logWarn("Response failed, URL: %s, header: %s, request: %s, error: %v, cost: %s.", req.URL, H2S(header), string(reqBody), err, timer.Stops())
 	} else {
-		a.logInfo("Response succeed, URL: %s, Header: %v, Request: %s, Response: %v, Cost: %s.", req.URL, header, string(reqBody), string(resBody), timer.Stops())
+		api.logInfo("Response succeed, URL: %s, header: %s, request: %s, response: %s, cost: %s.", req.URL, H2S(header), string(reqBody), string(resBody), timer.Stops())
 	}
 
 	return err

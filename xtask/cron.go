@@ -13,10 +13,10 @@ type CronTask struct {
 	Cmd  func()
 }
 
-func RunCronTasks(ctx context.Context, tasksFunc func() []CronTask) {
+func RunCronTasks(ctx context.Context, loc *time.Location, tasksFunc func() []CronTask) {
 	cronRunner := cron.New(
 		cron.WithSeconds(),
-		cron.WithLocation(location()),
+		cron.WithLocation(location(loc)),
 	)
 
 	for _, task := range tasksFunc() {
@@ -38,7 +38,10 @@ func RunCronTasks(ctx context.Context, tasksFunc func() []CronTask) {
 	Logger.Info("Cron task exit.")
 }
 
-func location() *time.Location {
+func location(loc *time.Location) *time.Location {
+	if loc != nil {
+		return loc
+	}
 	loc, err := time.LoadLocation("Asia/Shanghai")
 	if err != nil {
 		Logger.Errorf("Load locatioin failed, error: %v.", err)
@@ -47,23 +50,22 @@ func location() *time.Location {
 	return loc
 }
 
-func RunCronTasksWithConfig(ctx context.Context, tasksFunc func() []CronTask, configs []CronTask) {
+func RunCronTasksWithConfig(ctx context.Context, loc *time.Location, tasksFunc func() []CronTask, configs []CronTask) {
 	tasks := tasksFunc()
 
-	ConfigCronTasks(&tasks, configs)
+	ConfigCronTasks(tasks, configs)
 
-	RunCronTasks(ctx, func() []CronTask { return tasks })
+	RunCronTasks(ctx, loc, func() []CronTask { return tasks })
 }
 
-func ConfigCronTasks(tasks *[]CronTask, configs []CronTask) {
+func ConfigCronTasks(tasks []CronTask, configs []CronTask) {
 	index := make(map[string]CronTask, len(configs))
 	for _, config := range configs {
 		index[config.Name] = config
 	}
-
-	for i := 0; i < len(*tasks); i++ {
-		if config, ok := index[(*tasks)[i].Name]; ok {
-			(*tasks)[i].Spec = config.Spec
+	for i := 0; i < len(tasks); i++ {
+		if config, ok := index[tasks[i].Name]; ok {
+			tasks[i].Spec = config.Spec
 		}
 	}
 }

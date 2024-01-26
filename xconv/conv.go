@@ -42,13 +42,13 @@ func S2B(v string) bool {
 }
 
 func T2S(ts int64) string {
-	return time.Unix(ts, 0).Format("2006-01-02 15:04:05")
+	return time.Unix(ts, 0).Format(time.DateTime)
 }
 
-func S2T(timeString string) (int64, error) {
-	t, err := time.Parse("2006-01-02 15:04:05", timeString)
+func S2T(str string) int64 {
+	t, err := time.Parse(time.DateTime, str)
 	if err != nil {
-		return 0, err
+		return 0
 	}
-	return t.Unix(), nil
+	return t.Unix()
 }

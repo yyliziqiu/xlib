@@ -1,6 +1,8 @@
 package xhttp
 
 import (
+	"fmt"
+	"net/http"
 	"net/url"
 )
 
@@ -26,4 +28,16 @@ func AppendQuery(rawURL string, query url.Values) (string, error) {
 	uo.RawQuery = query.Encode()
 
 	return uo.String(), nil
+}
+
+func H2S(header http.Header) string {
+	if len(header) == 0 {
+		return "[]"
+	}
+	str := ""
+	for key := range header {
+		value := header.Get(key)
+		str += fmt.Sprintf("%s: %s; ", key, value)
+	}
+	return fmt.Sprintf("[%s]", str)
 }

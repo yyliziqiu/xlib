@@ -17,7 +17,6 @@ type Config struct {
 
 	// common
 	BootstrapServers string // must
-	SecurityRequired bool   // optional
 	SecurityProtocol string // optional
 	SaslUsername     string // optional
 	SaslPassword     string // optional
@@ -25,20 +24,20 @@ type Config struct {
 	SslCaLocation    string // optional
 
 	// producer
-	RequiredAcks          int                        // optional
 	Topic                 string                     // must
+	RequestRequiredAcks   int                        // optional
 	DeliveredCallback     func(kafka.TopicPartition) // optional
 	DeliverFailedCallback func(kafka.TopicPartition) // optional
 
 	// consumer
-	Topics            []string // must
-	GroupId           string   // must
-	OffsetReset       string   // optional
-	PollInterval      int      // optional
-	SessionTimeout    int      // optional
-	HeartbeatInterval int      // optional
-	FetchMax          int      // optional
-	PartitionFetchMax int      // optional
+	Topics                 []string // must
+	GroupId                string   // must
+	AutoOffsetReset        string   // optional
+	MaxPollIntervalMS      int      // optional
+	SessionTimeoutMS       int      // optional
+	HeartbeatIntervalMS    int      // optional
+	FetchMaxBytes          int      // optional
+	MaxPartitionFetchBytes int      // optional
 }
 
 func (c *Config) Default() {
@@ -48,22 +47,22 @@ func (c *Config) Default() {
 	if c.Role == "" {
 		c.Role = RoleConsumer
 	}
-	if c.OffsetReset == "" {
-		c.OffsetReset = "latest"
+	if c.AutoOffsetReset == "" {
+		c.AutoOffsetReset = "latest"
 	}
-	if c.PollInterval == 0 {
-		c.PollInterval = 10000 // 10s
+	if c.MaxPollIntervalMS == 0 {
+		c.MaxPollIntervalMS = 10000 // 10s
 	}
-	if c.SessionTimeout == 0 {
-		c.SessionTimeout = 10000 // 10s
+	if c.SessionTimeoutMS == 0 {
+		c.SessionTimeoutMS = 10000 // 10s
 	}
-	if c.HeartbeatInterval == 0 {
-		c.HeartbeatInterval = 2000 // 3s
+	if c.HeartbeatIntervalMS == 0 {
+		c.HeartbeatIntervalMS = 3000 // 3s
 	}
-	if c.FetchMax == 0 {
-		c.FetchMax = 1024000 // 1M
+	if c.FetchMaxBytes == 0 {
+		c.FetchMaxBytes = 1024000 // 1M
 	}
-	if c.PartitionFetchMax == 0 {
-		c.PartitionFetchMax = 512000 // 500K
+	if c.MaxPartitionFetchBytes == 0 {
+		c.MaxPartitionFetchBytes = 512000 // 500K
 	}
 }

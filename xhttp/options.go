@@ -21,21 +21,15 @@ func WithTimeout(timeout time.Duration) Option {
 	}
 }
 
+func WithFormat(format string) Option {
+	return func(api *API) {
+		api.format = format
+	}
+}
+
 func WithBaseURL(baseURL string) Option {
 	return func(api *API) {
 		api.baseURL = baseURL
-	}
-}
-
-func WithResType(typ string) Option {
-	return func(api *API) {
-		api.resType = typ
-	}
-}
-
-func WithResTypeStrict(strict bool) Option {
-	return func(api *API) {
-		api.resTypeStrict = strict
 	}
 }
 
@@ -73,14 +67,14 @@ func WithLogger(logger *logrus.Logger) Option {
 	}
 }
 
-func WithMaxLogLength(n int) Option {
+func WithLogLength(n int) Option {
 	return func(api *API) {
-		api.maxLogLength = n
+		api.logLength = n
 	}
 }
 
-func WithDumpRawMessage(enabled bool) Option {
+func WithDump(enabled bool) Option {
 	return func(api *API) {
-		api.dumpRawMessage = enabled
+		api.dump = enabled
 	}
 }
