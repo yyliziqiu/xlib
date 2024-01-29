@@ -33,31 +33,15 @@ func WithBaseURL(baseURL string) Option {
 	}
 }
 
-func WithErrorStruct(errorStruct interface{}) Option {
+func WithError(error interface{}) Option {
 	return func(api *API) {
-		api.errorStruct = errorStruct
+		api.error = error
 	}
 }
 
-func WithRequestFunc(f func(r *http.Request)) Option {
+func WithDumps(enabled bool) Option {
 	return func(api *API) {
-		api.requestFunc = f
-	}
-}
-
-func WithBasicAuth(username string, password string) Option {
-	return func(api *API) {
-		api.requestFunc = func(req *http.Request) {
-			req.SetBasicAuth(username, password)
-		}
-	}
-}
-
-func WithBearerToken(token string) Option {
-	return func(api *API) {
-		api.requestFunc = func(req *http.Request) {
-			req.Header.Set("Authorization", "Bearer "+token)
-		}
+		api.dumps = enabled
 	}
 }
 
@@ -73,8 +57,36 @@ func WithLogLength(n int) Option {
 	}
 }
 
-func WithDump(enabled bool) Option {
+func WithLogEscape(enabled bool) Option {
 	return func(api *API) {
-		api.dump = enabled
+		api.logEscape = enabled
+	}
+}
+
+func WithRequestBefore(f func(r *http.Request)) Option {
+	return func(api *API) {
+		api.requestBefore = f
+	}
+}
+
+func WithBasicAuth(username string, password string) Option {
+	return func(api *API) {
+		api.requestBefore = func(req *http.Request) {
+			req.SetBasicAuth(username, password)
+		}
+	}
+}
+
+func WithBearerToken(token string) Option {
+	return func(api *API) {
+		api.requestBefore = func(req *http.Request) {
+			req.Header.Set("Authorization", "Bearer "+token)
+		}
+	}
+}
+
+func WithResponseAfter(f func(res *http.Response) error) Option {
+	return func(api *API) {
+		api.responseAfter = f
 	}
 }

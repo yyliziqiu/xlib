@@ -23,26 +23,30 @@ const (
 )
 
 type API struct {
-	client      *http.Client
-	format      string
-	baseURL     string
-	errorStruct interface{}             // 不能是指针
-	requestFunc func(req *http.Request) // 在发送请求前调用，可以用来设置 basic auth
-	logger      *logrus.Logger          // 如果为 nil，则不记录日志
-	logLength   int                     // 日志最大长度
-	dump        bool                    // 将 HTTP 报文打印到控制台，调试用
+	client    *http.Client
+	format    string
+	baseURL   string
+	error     interface{}    // 不能是指针
+	dumps     bool           // 将 HTTP 报文打印到控制台
+	logger    *logrus.Logger // 如果为 nil，则不记录日志
+	logLength int            // 日志最大长度
+	logEscape bool           // 替换日志中的特殊字符
+
+	requestBefore func(req *http.Request)        // 在发送请求前调用
+	responseAfter func(res *http.Response) error // 在接收响应后调用
 }
 
 func New(options ...Option) *API {
 	api := &API{
-		client:      &http.Client{Timeout: 5 * time.Second},
-		baseURL:     "",
-		format:      FormatJSON,
-		errorStruct: nil,
-		requestFunc: nil,
-		logger:      nil,
-		logLength:   1024,
-		dump:        false,
+		client:        &http.Client{Timeout: 5 * time.Second},
+		format:        FormatJSON,
+		baseURL:       "",
+		error:         nil,
+		dumps:         false,
+		logger:        nil,
+		logLength:     1024,
+		requestBefore: nil,
+		responseAfter: nil,
 	}
 
 	for _, option := range options {
@@ -50,11 +54,6 @@ func New(options ...Option) *API {
 	}
 
 	return api
-}
-
-// Deprecated: Use New instead.
-func NewAPI(options ...Option) *API {
-	return New(options...)
 }
 
 func (api *API) newRequest(method string, path string, query url.Values, header http.Header, body io.Reader) (*http.Request, error) {
@@ -76,8 +75,8 @@ func (api *API) newRequest(method string, path string, query url.Values, header 
 		}
 	}
 
-	if api.requestFunc != nil {
-		api.requestFunc(req)
+	if api.requestBefore != nil {
+		api.requestBefore(req)
 	}
 
 	return req, nil
@@ -109,6 +108,13 @@ func (api *API) doRequest(req *http.Request) (*http.Response, error) {
 func (api *API) handleResponse(res *http.Response, out interface{}) ([]byte, error) {
 	api.dumpResponse(res)
 
+	if api.responseAfter != nil {
+		err := api.responseAfter(res)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read response failed [%v]", err)
@@ -137,8 +143,8 @@ func (api *API) handleJSONResponse(statusCode int, body []byte, out interface{})
 		}
 	} else {
 		var ret interface{}
-		if api.errorStruct != nil {
-			ret = reflect.New(reflect.TypeOf(api.errorStruct)).Interface()
+		if api.error != nil {
+			ret = reflect.New(reflect.TypeOf(api.error)).Interface()
 			err := json.Unmarshal(body, ret)
 			if err != nil {
 				return fmt.Errorf("unmarshal response [%s] failed [%v]", string(body), err)

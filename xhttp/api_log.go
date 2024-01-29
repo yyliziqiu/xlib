@@ -4,16 +4,24 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 )
 
 func (api *API) logPrepare(log string) string {
 	if api.logLength <= 0 {
 		return ""
 	}
+
 	if len(log) > api.logLength {
 		log = log[:api.logLength]
 	}
-	// return strings.ReplaceAll(log, "\n", "\\n")
+
+	if api.logEscape {
+		log = strings.ReplaceAll(log, "\t", "\\t")
+		log = strings.ReplaceAll(log, "\r", "\\r")
+		log = strings.ReplaceAll(log, "\n", "\\n")
+	}
+
 	return log
 }
 
@@ -34,7 +42,7 @@ func (api *API) logWarn(format string, args ...interface{}) {
 }
 
 func (api *API) dumpRequest(req *http.Request) {
-	if !api.dump {
+	if !api.dumps {
 		return
 	}
 
@@ -50,7 +58,7 @@ func (api *API) dumpRequest(req *http.Request) {
 }
 
 func (api *API) dumpResponse(res *http.Response) {
-	if !api.dump {
+	if !api.dumps {
 		return
 	}
 
