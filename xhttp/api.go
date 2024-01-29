@@ -45,6 +45,7 @@ func New(options ...Option) *API {
 		dumps:         false,
 		logger:        nil,
 		logLength:     1024,
+		logEscape:     false,
 		requestBefore: nil,
 		responseAfter: nil,
 	}
