@@ -8,8 +8,8 @@ const (
 	DefaultId = "default"
 
 	ModeSingle          = "single"
-	ModeCluster         = "cluster"
 	ModeSentinel        = "sentinel"
+	ModeCluster         = "cluster"
 	ModeSentinelCluster = "sentinel-cluster"
 )
 

@@ -34,10 +34,10 @@ func Init(cfs ...Config) error {
 
 func New(config Config) (*redis.Client, *redis.ClusterClient) {
 	switch config.Mode {
-	case ModeCluster:
-		return nil, NewClusterClient(config)
 	case ModeSentinel:
 		return NewFailoverClient(config), nil
+	case ModeCluster:
+		return nil, NewClusterClient(config)
 	case ModeSentinelCluster:
 		return nil, NewFailoverClusterClient(config)
 	default:
