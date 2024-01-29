@@ -1,8 +1,6 @@
 package xredis
 
 import (
-	"fmt"
-
 	"github.com/go-redis/redis/v8"
 )
 
@@ -22,11 +20,7 @@ func Init(cfs ...Config) error {
 	clients = make(map[string]*redis.Client, 16)
 	clusters = make(map[string]*redis.ClusterClient, 16)
 	for _, config := range configs {
-		cli, clu, err := New(config)
-		if err != nil {
-			Finally()
-			return err
-		}
+		cli, clu := New(config)
 		if cli != nil {
 			clients[config.Id] = cli
 		}
@@ -38,22 +32,20 @@ func Init(cfs ...Config) error {
 	return nil
 }
 
-func New(config Config) (*redis.Client, *redis.ClusterClient, error) {
+func New(config Config) (*redis.Client, *redis.ClusterClient) {
 	switch config.Mode {
-	case ModeSingle:
-		return NewClient(config), nil, nil
 	case ModeCluster:
-		return nil, NewClusterClient(config), nil
+		return nil, NewClusterClient(config)
 	case ModeSentinel:
-		return NewFailoverClient(config), nil, nil
+		return NewFailoverClient(config), nil
 	case ModeSentinelCluster:
-		return nil, NewFailoverClusterClient(config), nil
+		return nil, NewFailoverClusterClient(config)
 	default:
-		return nil, nil, fmt.Errorf("not support redis mode [%s]", config.Mode)
+		return NewSingleClient(config), nil
 	}
 }
 
-func NewClient(config Config) *redis.Client {
+func NewSingleClient(config Config) *redis.Client {
 	return redis.NewClient(&redis.Options{
 		Addr:               config.Addr,
 		Username:           config.Username,
