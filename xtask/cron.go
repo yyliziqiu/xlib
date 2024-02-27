@@ -2,6 +2,7 @@ package xtask
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/robfig/cron/v3"
@@ -51,21 +52,38 @@ func location(loc *time.Location) *time.Location {
 }
 
 func RunCronTasksWithConfig(ctx context.Context, loc *time.Location, tasksFunc func() []CronTask, configs []CronTask) {
-	tasks := tasksFunc()
-
-	ConfigCronTasks(tasks, configs)
-
-	RunCronTasks(ctx, loc, func() []CronTask { return tasks })
-}
-
-func ConfigCronTasks(tasks []CronTask, configs []CronTask) {
 	index := make(map[string]CronTask, len(configs))
 	for _, config := range configs {
 		index[config.Name] = config
 	}
+
+	tasks := tasksFunc()
 	for i := 0; i < len(tasks); i++ {
 		if config, ok := index[tasks[i].Name]; ok {
 			tasks[i].Spec = config.Spec
 		}
 	}
+
+	RunCronTasks(ctx, loc, func() []CronTask { return tasks })
+}
+
+func RunCronTasksByConfig(ctx context.Context, loc *time.Location, tasksFunc func() []CronTask, configs []CronTask) error {
+	index := make(map[string]CronTask)
+	for _, task := range tasksFunc() {
+		index[task.Name] = task
+	}
+
+	runnable := make([]CronTask, 0)
+	for _, config := range configs {
+		task, ok := index[config.Name]
+		if !ok {
+			return fmt.Errorf("not found cron task[%s]", config.Name)
+		}
+		task.Spec = config.Spec
+		runnable = append(runnable, task)
+	}
+
+	RunCronTasks(ctx, loc, func() []CronTask { return runnable })
+
+	return nil
 }
