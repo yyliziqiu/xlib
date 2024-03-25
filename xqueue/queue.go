@@ -333,6 +333,24 @@ func (q *Queue) Pop() (interface{}, bool) {
 	return q.pop()
 }
 
+// Pops 从队列头弹出多个元素
+func (q *Queue) Pops(chk func(item interface{}) bool) []interface{} {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	result := make([]interface{}, 0, 4)
+	for i := q.head; i != q.tail; i = q.next(i) {
+		ok := chk(q.list[i])
+		if !ok {
+			break
+		}
+		result = append(result, q.list[i])
+		q.pop()
+	}
+
+	return result
+}
+
 // SlideN 从队列尾向队列中添加一个元素，如果添加完元素队列长度大于 n，则截取（只保留）队列后 n 个元素。类似滑动窗口
 func (q *Queue) SlideN(b interface{}, n int) (interface{}, bool) {
 	q.mu.Lock()
