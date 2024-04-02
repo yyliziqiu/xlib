@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/robfig/cron/v3"
+
+	"github.com/yyliziqiu/xlib/xlog"
 )
 
 type CronTask struct {
@@ -26,17 +28,17 @@ func RunCronTasks(ctx context.Context, loc *time.Location, tasksFunc func() []Cr
 		}
 		_, err := cronRunner.AddFunc(task.Spec, task.Cmd)
 		if err != nil {
-			Logger.Errorf("Add cron task failed, error: %v.", err)
+			xlog.Errorf("Add cron task failed, error: %v.", err)
 			return
 		}
-		Logger.Infof("Add cron task: %s.", task.Name)
+		xlog.Infof("Add cron task: %s.", task.Name)
 	}
 
 	cronRunner.Start()
-	Logger.Info("Cron task started.")
+	xlog.Info("Cron task started.")
 	<-ctx.Done()
 	cronRunner.Stop()
-	Logger.Info("Cron task exit.")
+	xlog.Info("Cron task exit.")
 }
 
 func location(loc *time.Location) *time.Location {
@@ -45,7 +47,7 @@ func location(loc *time.Location) *time.Location {
 	}
 	loc, err := time.LoadLocation("Asia/Shanghai")
 	if err != nil {
-		Logger.Errorf("Load locatioin failed, error: %v.", err)
+		xlog.Errorf("Load locatioin failed, error: %v.", err)
 		return time.UTC
 	}
 	return loc

@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/yyliziqiu/xlib/xlog"
 	"github.com/yyliziqiu/xlib/xutil"
 )
@@ -17,15 +15,7 @@ type Persistence interface {
 	Interval() time.Duration
 }
 
-var (
-	Logger *logrus.Logger
-)
-
 func Persist(ctx context.Context, persistencesFunc func() []Persistence) error {
-	if Logger == nil {
-		Logger = xlog.Default
-	}
-
 	persistences := persistencesFunc()
 
 	err := load(persistences)
@@ -45,12 +35,12 @@ func load(persistences []Persistence) error {
 	for _, persistence := range persistences {
 		err := persistence.Load()
 		if err != nil {
-			Logger.Errorf("Load snapshot failed, name: %s, error: %v.", persistence.Name(), err)
+			xlog.Errorf("Load snapshot failed, name: %s, error: %v.", persistence.Name(), err)
 			return err
 		}
-		Logger.Infof("Load snapshot succeed, name: %s, cost: %s.", persistence.Name(), timer.Pauses())
+		xlog.Infof("Load snapshot succeed, name: %s, cost: %s.", persistence.Name(), timer.Pauses())
 	}
-	Logger.Infof("Loaded all snapshots, cost: %s.", timer.Stops())
+	xlog.Infof("Loaded all snapshots, cost: %s.", timer.Stops())
 	return nil
 }
 
@@ -67,7 +57,6 @@ func runSave(ctx context.Context, persistence Persistence) {
 			_ = save(persistence)
 		case <-ctx.Done():
 			_ = save(persistence)
-			// Logger.Infof("Save snapshot exit, name: %s.", persistence.Name())
 			return
 		}
 	}
@@ -77,9 +66,9 @@ func save(persistence Persistence) error {
 	timer := xutil.NewTimer()
 	err := persistence.Save()
 	if err != nil {
-		Logger.Errorf("Save snapshot failed, name: %s, error: %v.", persistence.Name(), err)
+		xlog.Errorf("Save snapshot failed, name: %s, error: %v.", persistence.Name(), err)
 	} else {
-		Logger.Infof("Save snapshot succeed, name: %s, cost: %s.", persistence.Name(), timer.Stops())
+		xlog.Infof("Save snapshot succeed, name: %s, cost: %s.", persistence.Name(), timer.Stops())
 	}
 	return err
 }

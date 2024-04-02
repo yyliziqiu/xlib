@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	defaultConfig Config
+	_config Config
 
 	Default *logrus.Logger
 
@@ -23,15 +23,14 @@ var (
 )
 
 func Init(config Config) (err error) {
-	defaultConfig = config
-	defaultConfig.Default()
+	_config = config.Default()
 
-	Default, err = New(defaultConfig)
+	Default, err = New(_config)
 	if err != nil {
 		return err
 	}
 
-	Console, err = NewWithConsole(defaultConfig)
+	Console, err = NewConsoleLogger(_config)
 	if err != nil {
 		return err
 	}
@@ -41,12 +40,12 @@ func Init(config Config) (err error) {
 
 func New(config Config) (*logrus.Logger, error) {
 	if config.Console {
-		return NewWithConsole(config)
+		return NewConsoleLogger(config)
 	}
-	return NewWithFile(config)
+	return NewFileLogger(config)
 }
 
-func NewWithConsole(config Config) (*logrus.Logger, error) {
+func NewConsoleLogger(config Config) (*logrus.Logger, error) {
 	logger := logrus.New()
 
 	// 禁止输出方法名
@@ -92,7 +91,7 @@ func formatter(config Config) logrus.Formatter {
 	}
 }
 
-func NewWithFile(config Config) (*logrus.Logger, error) {
+func NewFileLogger(config Config) (*logrus.Logger, error) {
 	logger := logrus.New()
 
 	// 禁止控制台输出
@@ -244,7 +243,7 @@ func NewRotation(dirname string, filename string, maxAge time.Duration, Rotation
 }
 
 func NewWithName(name string) (*logrus.Logger, error) {
-	config := defaultConfig
+	config := _config
 	config.Name = name
 	return New(config)
 }

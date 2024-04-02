@@ -1,4 +1,4 @@
-package xsql
+package xdb
 
 import (
 	"database/sql"
@@ -14,7 +14,7 @@ func IsNoRowsError(err error) bool {
 	return errors.Is(err, sql.ErrNoRows)
 }
 
-func IsMySQLDuplicateKeyError(err error) bool {
+func IsDuplicateKeyErrorInMySQL(err error) bool {
 	err2, ok := err.(*mysql.MySQLError)
 	if !ok {
 		return false
@@ -22,7 +22,7 @@ func IsMySQLDuplicateKeyError(err error) bool {
 	return err2.Number == 1062
 }
 
-func IsPostgresDuplicateKeyError(err error) bool {
+func IsDuplicateKeyErrorInPostgres(err error) bool {
 	err2, ok := err.(*pq.Error)
 	if !ok {
 		return false
@@ -52,15 +52,15 @@ func JoinStringValue(items []string) string {
 	return "'" + strings.Join(items, "', '") + "'"
 }
 
-func JoinStingValueWithSlashes(items []string) string {
+func JoinStingValueSafe(items []string) string {
 	length := len(items)
 	for i := 0; i < length; i++ {
-		items[i] = AddSlashes(items[i])
+		items[i] = escape(items[i])
 	}
 	return JoinStringValue(items)
 }
 
-func AddSlashes(str string) string {
+func escape(str string) string {
 	chars := []rune(str)
 	temp := make([]rune, 0, len(chars))
 	for _, c := range chars {

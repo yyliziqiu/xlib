@@ -9,8 +9,8 @@ const (
 
 type Config struct {
 	Console         bool
-	Name            string
 	Path            string
+	Name            string
 	Level           string
 	MaxAge          time.Duration
 	RotationTime    time.Duration
@@ -20,12 +20,12 @@ type Config struct {
 	TimestampFormat string
 }
 
-func (c *Config) Default() {
+func (c Config) Default() Config {
+	if c.Path == "" {
+		c.Console = true
+	}
 	if c.Name == "" {
 		c.Name = "app"
-	}
-	if c.Path == "" {
-		c.Path = "logs"
 	}
 	if c.Level == "" {
 		c.Level = "debug"
@@ -40,6 +40,7 @@ func (c *Config) Default() {
 		c.Formatter = TextFormatterName
 	}
 	if c.TimestampFormat == "" {
-		c.TimestampFormat = "2006-01-02 15:04:05"
+		c.TimestampFormat = time.DateTime
 	}
+	return c
 }

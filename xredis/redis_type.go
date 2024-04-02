@@ -46,7 +46,7 @@ type Config struct {
 	IdleCheckFrequency time.Duration // optional
 }
 
-func (c *Config) Default() {
+func (c Config) Default() Config {
 	if c.Id == "" {
 		c.Id = DefaultId
 	}
@@ -60,16 +60,16 @@ func (c *Config) Default() {
 		c.MaxRetries = 3
 	}
 	if c.DialTimeout == 0 {
-		c.DialTimeout = 30 * time.Second
+		c.DialTimeout = time.Minute
 	}
 	if c.ReadTimeout == 0 {
-		c.ReadTimeout = 10 * time.Second
+		c.ReadTimeout = 3 * time.Second
 	}
 	if c.WriteTimeout == 0 {
-		c.WriteTimeout = 10 * time.Second
+		c.WriteTimeout = 3 * time.Second
 	}
 	if c.PoolSize == 0 {
-		c.PoolSize = 50
+		c.PoolSize = 10
 	}
 	if c.MinIdleConns == 0 {
 		c.MinIdleConns = 10
@@ -86,4 +86,5 @@ func (c *Config) Default() {
 	if c.IdleCheckFrequency == 0 {
 		c.IdleCheckFrequency = 30 * time.Second
 	}
+	return c
 }

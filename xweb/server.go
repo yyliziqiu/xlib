@@ -15,8 +15,8 @@ import (
 type Config struct {
 	Addr             string
 	ErrorLogName     string
-	AccessLogName    string
 	DisableAccessLog bool
+	AccessLogName    string
 }
 
 func (c *Config) Default() {

@@ -5,27 +5,26 @@ import (
 )
 
 var (
-	configs  map[string]Config
-	clients  map[string]*redis.Client
-	clusters map[string]*redis.ClusterClient
+	_configs map[string]Config
+	_clis    map[string]*redis.Client
+	_clus    map[string]*redis.ClusterClient
 )
 
-func Init(cfs ...Config) error {
-	configs = make(map[string]Config, 16)
-	for _, config := range cfs {
-		config.Default()
-		configs[config.Id] = config
+func Init(configs ...Config) error {
+	_configs = make(map[string]Config, 16)
+	for _, config := range configs {
+		_configs[config.Id] = config.Default()
 	}
 
-	clients = make(map[string]*redis.Client, 16)
-	clusters = make(map[string]*redis.ClusterClient, 16)
+	_clis = make(map[string]*redis.Client, 16)
+	_clus = make(map[string]*redis.ClusterClient, 16)
 	for _, config := range configs {
 		cli, clu := New(config)
 		if cli != nil {
-			clients[config.Id] = cli
+			_clis[config.Id] = cli
 		}
 		if clu != nil {
-			clusters[config.Id] = clu
+			_clus[config.Id] = clu
 		}
 	}
 
@@ -154,16 +153,16 @@ func NewFailoverClusterClient(config Config) *redis.ClusterClient {
 }
 
 func Finally() {
-	for _, client := range clients {
-		_ = client.Close()
+	for _, cli := range _clis {
+		_ = cli.Close()
 	}
-	for _, cluster := range clusters {
-		_ = cluster.Close()
+	for _, clu := range _clus {
+		_ = clu.Close()
 	}
 }
 
 func GetCli(id string) *redis.Client {
-	return clients[id]
+	return _clis[id]
 }
 
 func GetDefaultCli() *redis.Client {
@@ -171,7 +170,7 @@ func GetDefaultCli() *redis.Client {
 }
 
 func GetClu(id string) *redis.ClusterClient {
-	return clusters[id]
+	return _clus[id]
 }
 
 func GetDefaultClu() *redis.ClusterClient {

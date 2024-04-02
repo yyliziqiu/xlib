@@ -7,25 +7,23 @@ import (
 )
 
 var (
-	configs   map[string]Config
-	consumers map[string]*kafka.Consumer
-	producers map[string]*kafka.Producer
+	_configs   map[string]Config
+	_consumers map[string]*kafka.Consumer
+	_producers map[string]*kafka.Producer
 )
 
-func Init(autoNew bool, cfs ...Config) error {
-	configs = make(map[string]Config, 16)
-	for _, config := range cfs {
-		config.Default()
-		configs[config.Id] = config
-	}
-
-	if !autoNew {
-		return nil
-	}
-
-	consumers = make(map[string]*kafka.Consumer, 16)
-	producers = make(map[string]*kafka.Producer, 16)
+func Init(configs ...Config) error {
+	_configs = make(map[string]Config, 16)
 	for _, config := range configs {
+		_configs[config.Id] = config.Default()
+	}
+
+	_consumers = make(map[string]*kafka.Consumer, 8)
+	_producers = make(map[string]*kafka.Producer, 8)
+	for _, config := range _configs {
+		if !config.Auto {
+			continue
+		}
 		switch config.Role {
 		case RoleConsumer:
 			consumer, err := NewConsumer(config)
@@ -33,14 +31,14 @@ func Init(autoNew bool, cfs ...Config) error {
 				Finally()
 				return err
 			}
-			consumers[config.Id] = consumer
+			_consumers[config.Id] = consumer
 		case RoleProducer:
 			producer, err := NewProducer(config)
 			if err != nil {
 				Finally()
 				return err
 			}
-			producers[config.Id] = producer
+			_producers[config.Id] = producer
 		default:
 			return errors.New("not support kafka role")
 		}
@@ -50,32 +48,24 @@ func Init(autoNew bool, cfs ...Config) error {
 }
 
 func Finally() {
-	for _, consumer := range consumers {
+	for _, consumer := range _consumers {
 		_ = consumer.Close()
 	}
-	for _, producer := range producers {
+	for _, producer := range _producers {
 		producer.Close()
 	}
 }
 
 func GetConfig(id string) Config {
-	return configs[id]
+	return _configs[id]
 }
 
 func GetDefaultConfig() Config {
 	return GetConfig(DefaultId)
 }
 
-func GetTopic(id string) string {
-	return configs[id].Topic
-}
-
-func GetDefaultTopic() string {
-	return GetTopic(DefaultId)
-}
-
 func GetConsumer(id string) *kafka.Consumer {
-	return consumers[id]
+	return _consumers[id]
 }
 
 func GetDefaultConsumer() *kafka.Consumer {
@@ -83,7 +73,7 @@ func GetDefaultConsumer() *kafka.Consumer {
 }
 
 func GetProducer(id string) *kafka.Producer {
-	return producers[id]
+	return _producers[id]
 }
 
 func GetDefaultProducer() *kafka.Producer {

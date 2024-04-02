@@ -12,10 +12,10 @@ const (
 )
 
 type Config struct {
-	Id   string // optional
-	Role string // optional, default is consumer
-
 	// common
+	Id               string // optional
+	Role             string // optional, default is consumer
+	Auto             bool   // optional
 	BootstrapServers string // must
 	SecurityProtocol string // optional
 	SaslUsername     string // optional
@@ -40,7 +40,7 @@ type Config struct {
 	MaxPartitionFetchBytes int      // optional
 }
 
-func (c *Config) Default() {
+func (c Config) Default() Config {
 	if c.Id == "" {
 		c.Id = DefaultId
 	}
@@ -65,4 +65,5 @@ func (c *Config) Default() {
 	if c.MaxPartitionFetchBytes == 0 {
 		c.MaxPartitionFetchBytes = 512000 // 500K
 	}
+	return c
 }

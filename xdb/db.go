@@ -1,63 +1,37 @@
-package xsql
+package xdb
 
 import (
 	"database/sql"
 	"fmt"
-	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	"github.com/yyliziqiu/xlib/xlog"
 )
 
 var (
-	logger     *logrus.Logger
-	loggerOnce sync.Once
+	_configs map[string]Config
+	_sqlDBS  map[string]*sql.DB
+	_ormDBS  map[string]*gorm.DB
 )
 
-func SetLogger(lgg *logrus.Logger) {
-	logger = lgg
-}
-
-func GetLogger() *logrus.Logger {
-	if logger != nil {
-		return logger
-	}
-	loggerOnce.Do(func() {
-		if logger == nil {
-			logger = xlog.NewWithNameMust("gorm")
-		}
-	})
-	return logger
-}
-
-var (
-	configs map[string]Config
-	sqls    map[string]*sql.DB
-	orms    map[string]*gorm.DB
-)
-
-func Init(cfs ...Config) error {
-	configs = make(map[string]Config, 16)
-	for _, config := range cfs {
-		config.Default()
-		configs[config.Id] = config
-	}
-
-	sqls = make(map[string]*sql.DB, 16)
-	orms = make(map[string]*gorm.DB, 16)
+func Init(configs ...Config) error {
+	_configs = make(map[string]Config, 8)
 	for _, config := range configs {
+		_configs[config.Id] = config.Default()
+	}
+
+	_sqlDBS = make(map[string]*sql.DB, 8)
+	_ormDBS = make(map[string]*gorm.DB, 8)
+	for _, config := range _configs {
 		db, err := NewSQL(config)
 		if err != nil {
 			Finally()
 			return err
 		}
-		sqls[config.Id] = db
+		_sqlDBS[config.Id] = db
 
 		if !config.EnableORM {
 			continue
@@ -68,7 +42,7 @@ func Init(cfs ...Config) error {
 			Finally()
 			return err
 		}
-		orms[config.Id] = orm
+		_ormDBS[config.Id] = orm
 	}
 
 	return nil
@@ -99,22 +73,22 @@ func NewORM(config Config, db *sql.DB) (*gorm.DB, error) {
 
 	switch config.Type {
 	case DBTypeMySQL:
-		return gorm.Open(mysql.New(mysql.Config{Conn: db}), config.GORMConfig())
+		return gorm.Open(mysql.New(mysql.Config{Conn: db}), config.ORMConfig())
 	case DBTypePostgres:
-		return gorm.Open(postgres.New(postgres.Config{Conn: db}), config.GORMConfig())
+		return gorm.Open(postgres.New(postgres.Config{Conn: db}), config.ORMConfig())
 	default:
 		return nil, fmt.Errorf("not support db type [%s]", config.Type)
 	}
 }
 
 func Finally() {
-	for _, db := range sqls {
+	for _, db := range _sqlDBS {
 		_ = db.Close()
 	}
 }
 
 func GetConfig(id string) Config {
-	return configs[id]
+	return _configs[id]
 }
 
 func GetDefaultConfig() Config {
@@ -122,17 +96,17 @@ func GetDefaultConfig() Config {
 }
 
 func GetDB(id string) *sql.DB {
-	return sqls[id]
+	return _sqlDBS[id]
 }
 
 func GetDefaultDB() *sql.DB {
 	return GetDB(DefaultId)
 }
 
-func GetORM(id string) *gorm.DB {
-	return orms[id]
+func GetORMDB(id string) *gorm.DB {
+	return _ormDBS[id]
 }
 
-func GetDefaultORM() *gorm.DB {
-	return GetORM(DefaultId)
+func GetDefaultORMDB() *gorm.DB {
+	return GetORMDB(DefaultId)
 }

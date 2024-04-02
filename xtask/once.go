@@ -3,6 +3,8 @@ package xtask
 import (
 	"context"
 	"fmt"
+
+	"github.com/yyliziqiu/xlib/xlog"
 )
 
 type OnceTask struct {
@@ -19,7 +21,7 @@ func StartOnceTasks(ctx context.Context, tasksFunc func() []OnceTask) {
 		for i := 0; i < task.GON; i++ {
 			go task.Cmd(ctx)
 		}
-		Logger.Infof("Add once task: %s (%d).", task.Name, task.GON)
+		xlog.Infof("Add once task: %s (%d).", task.Name, task.GON)
 	}
 }
 

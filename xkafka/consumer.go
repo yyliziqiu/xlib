@@ -21,7 +21,6 @@ func NewConsumer(config Config) (*kafka.Consumer, error) {
 	if config.SecurityProtocol != "" {
 		_ = conf.SetKey("security.protocol", config.SecurityProtocol)
 		switch config.SecurityProtocol {
-		case "plaintext":
 		case "sasl_plaintext":
 			_ = conf.SetKey("sasl.username", config.SaslUsername)
 			_ = conf.SetKey("sasl.password", config.SaslPassword)
@@ -31,6 +30,7 @@ func NewConsumer(config Config) (*kafka.Consumer, error) {
 			_ = conf.SetKey("sasl.password", config.SaslPassword)
 			_ = conf.SetKey("sasl.mechanism", config.SaslMechanism)
 			_ = conf.SetKey("ssl.ca.location", config.SslCaLocation)
+		default:
 		}
 	}
 
@@ -45,18 +45,6 @@ func NewConsumer(config Config) (*kafka.Consumer, error) {
 	}
 
 	return consumer, nil
-}
-
-func NewConsumerByConfigId(id string) (*kafka.Consumer, error) {
-	config, ok := configs[id]
-	if !ok {
-		return nil, fmt.Errorf("kafka config [%s] not exist", id)
-	}
-	return NewConsumer(config)
-}
-
-func NewDefaultConsumer() (*kafka.Consumer, error) {
-	return NewConsumerByConfigId(DefaultId)
 }
 
 // func consume(consumer *kafka.Consumer) {

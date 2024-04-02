@@ -1,4 +1,4 @@
-package xsql
+package xdb
 
 import (
 	"context"
@@ -7,18 +7,20 @@ import (
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+
+	"github.com/yyliziqiu/xlib/xlog"
 )
 
-type Migration struct {
+type TablesMigration struct {
 	DB       *gorm.DB
 	Once     []schema.Tabler
 	Cron     []schema.Tabler
 	Interval time.Duration
 }
 
-func Migrates(ctx context.Context, migrations func() []Migration) (err error) {
+func MigrateTablesBatch(ctx context.Context, migrations func() []TablesMigration) (err error) {
 	for _, migration := range migrations() {
-		err = Migrate(ctx, migration)
+		err = MigrateTables(ctx, migration)
 		if err != nil {
 			return err
 		}
@@ -26,13 +28,12 @@ func Migrates(ctx context.Context, migrations func() []Migration) (err error) {
 	return nil
 }
 
-func Migrate(ctx context.Context, migration Migration) (err error) {
+func MigrateTables(ctx context.Context, migration TablesMigration) (err error) {
 	db := migration.DB.Set("gorm:table_options", "ENGINE=InnoDB")
 
 	err = migrateTables(db, migration.Once)
 	if err != nil {
-		logger.Errorf("Migrate DB failed, error: %s.", err)
-		return err
+		return fmt.Errorf("migrate DB error [%v]", err)
 	}
 
 	if len(migration.Cron) == 0 {
@@ -41,8 +42,7 @@ func Migrate(ctx context.Context, migration Migration) (err error) {
 
 	err = migrateTables(db, migration.Cron)
 	if err != nil {
-		logger.Errorf("Migrate DB failed, error: %s.", err)
-		return err
+		return fmt.Errorf("migrate tables error [%v]", err)
 	}
 
 	go runCronMigrateTables(ctx, migration.Interval, db, migration.Cron)
@@ -67,10 +67,32 @@ func runCronMigrateTables(ctx context.Context, interval time.Duration, db *gorm.
 		case <-ticker.C:
 			err := migrateTables(db, tables)
 			if err != nil {
-				logger.Errorf("Migrate DB failed, error: %s.", err)
+				xlog.Errorf("Migrate table failed, error: %v.", err)
 			}
 		case <-ctx.Done():
 			return
 		}
 	}
+}
+
+type RecordMigration interface {
+	Exist() (bool, error)
+	Create() error
+}
+
+func MigrateRecords(migrations []RecordMigration) error {
+	for _, migration := range migrations {
+		exist, err := migration.Exist()
+		if err != nil {
+			return err
+		}
+		if exist {
+			continue
+		}
+		err = migration.Create()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -54,18 +54,6 @@ func NewProducer(config Config) (*kafka.Producer, error) {
 	return producer, nil
 }
 
-func NewProducerById(id string) (*kafka.Producer, error) {
-	config, ok := configs[id]
-	if !ok {
-		return nil, fmt.Errorf("kafka config [%s] not exist", id)
-	}
-	return NewProducer(config)
-}
-
-func NewDefaultProducer() (*kafka.Producer, error) {
-	return NewProducerById(DefaultId)
-}
-
 func Produce(producer *kafka.Producer, topic string, message []byte) error {
 	return producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},

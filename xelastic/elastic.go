@@ -1,87 +1,56 @@
 package xelastic
 
 import (
-	"sync"
-
 	"github.com/olivere/elastic/v7"
-	"github.com/sirupsen/logrus"
-
-	"github.com/yyliziqiu/xlib/xlog"
 )
 
 var (
-	logger     *logrus.Logger
-	loggerOnce sync.Once
+	_configs map[string]Config
+	_clients map[string]*elastic.Client
 )
 
-func SetLogger(lg *logrus.Logger) {
-	logger = lg
-}
-
-func GetLogger() *logrus.Logger {
-	if logger != nil {
-		return logger
-	}
-	loggerOnce.Do(func() {
-		if logger == nil {
-			logger = xlog.NewWithNameMust("elastic")
-		}
-	})
-	return logger
-}
-
-var (
-	configs map[string]Config
-	clients map[string]*elastic.Client
-)
-
-func Init(cfs ...Config) error {
-	configs = make(map[string]Config, 16)
-	for _, config := range cfs {
-		config.Default()
-		configs[config.Id] = config
-	}
-
-	clients = make(map[string]*elastic.Client, 16)
+func Init(configs ...Config) error {
+	_configs = make(map[string]Config, 8)
 	for _, config := range configs {
+		_configs[config.Id] = config.Default()
+	}
+
+	_clients = make(map[string]*elastic.Client, 8)
+	for _, config := range _configs {
 		client, err := NewClient(config)
 		if err != nil {
 			Finally()
 			return err
 		}
-		clients[config.Id] = client
+		_clients[config.Id] = client
 	}
 
 	return nil
 }
 
 func NewClient(config Config) (*elastic.Client, error) {
-	var lgg elastic.Logger
-	if config.EnableLog {
-		lgg = GetLogger()
-	}
-
 	return elastic.NewClient(
 		elastic.SetURL(config.Hosts...),
 		elastic.SetBasicAuth(config.Username, config.Password),
+		elastic.SetHttpClient(config.Client),
 		elastic.SetSniff(false),
 		elastic.SetHealthcheck(false),
-		elastic.SetInfoLog(lgg),
-		elastic.SetErrorLog(lgg),
-		elastic.SetTraceLog(lgg),
+		elastic.SetInfoLog(config.Logger),
+		elastic.SetErrorLog(config.Logger),
+		elastic.SetTraceLog(config.Logger),
 	)
 }
 
 func Finally() {
-	for _, client := range clients {
+	for _, client := range _clients {
 		client.Stop()
 	}
 }
 
-func GetClient(id string) *elastic.Client {
-	return clients[id]
+func GetCli(id string) *elastic.Client {
+	return _clients[id]
 }
 
-func GetDefaultClient() *elastic.Client {
-	return GetClient(DefaultId)
+func DefaultCli() *elastic.Client {
+	return GetCli(DefaultId)
 }
