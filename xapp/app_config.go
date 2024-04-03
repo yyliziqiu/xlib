@@ -9,6 +9,7 @@ import (
 	"github.com/yyliziqiu/xlib/xkafka"
 	"github.com/yyliziqiu/xlib/xlog"
 	"github.com/yyliziqiu/xlib/xredis"
+	"github.com/yyliziqiu/xlib/xtask"
 	"github.com/yyliziqiu/xlib/xweb"
 )
 
@@ -29,9 +30,9 @@ type BaseConfig struct {
 	SvcId    string
 	BasePath string
 	DataPath string
+	Values   map[string]string
 
 	Log     xlog.Config
-	Web     xweb.Config
 	DB      []xdb.Config
 	Redis   []xredis.Config
 	Kafka   []xkafka.Config
@@ -41,6 +42,11 @@ type BaseConfig struct {
 		EnableTables  bool
 		EnableRecords bool
 	}
+
+	CronTask []xtask.CronTask
+	OnceTask []xtask.OnceTask
+
+	Web xweb.Config
 }
 
 func (c *BaseConfig) Check() error {
