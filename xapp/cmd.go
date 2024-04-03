@@ -38,10 +38,10 @@ func initRootCmd(app *App) {
 		},
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if strings.TrimSpace(*config) != "" {
-				app.ConfigPath = *config
+				app.ConfigFile = *config
 			}
 			if strings.TrimSpace(*logdir) != "" {
-				app.LogPath = *logdir
+				app.LogDir = *logdir
 			}
 			err := app.Init()
 			if err != nil {

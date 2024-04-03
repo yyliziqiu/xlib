@@ -20,13 +20,13 @@ type App struct {
 	Version string
 
 	// 配置文件路径
-	ConfigPath string
+	ConfigFile string
 
 	// 日志目录路径。如果不为空，将覆盖配置文件中的日志路径
-	LogPath string
+	LogDir string
 
-	// 应用关闭等待时间
-	ExitDuration time.Duration
+	// 应用关闭等待毫秒数
+	WaitMS time.Duration
 
 	// 全局配置
 	Config Config
@@ -44,7 +44,7 @@ func (app *App) Exec() (err error) {
 }
 
 func (app *App) Init() (err error) {
-	err = xconfig.Init(app.ConfigPath, app.Config)
+	err = xconfig.Init(app.ConfigFile, app.Config)
 	if err != nil {
 		return fmt.Errorf("init config error [%v]", err)
 	}
@@ -57,8 +57,8 @@ func (app *App) Init() (err error) {
 	app.Config.Default()
 
 	logC := app.Config.GetLog()
-	if app.LogPath != "" {
-		logC.Path = app.LogPath
+	if app.LogDir != "" {
+		logC.Path = app.LogDir
 	}
 	err = xlog.Init(logC)
 	if err != nil {
@@ -94,8 +94,8 @@ func (app *App) Boot() (err error) {
 
 	cancel()
 
-	if app.ExitDuration > 0 {
-		time.Sleep(app.ExitDuration)
+	if app.WaitMS > 0 {
+		time.Sleep(app.WaitMS * time.Millisecond)
 	}
 
 	xlog.Info("App exit.")
