@@ -40,12 +40,12 @@ type App struct {
 	Modules func() []ModuleWrapper
 }
 
-func (app *App) Exec() (err error) {
+func (app *App) Exec(block bool) (err error) {
 	err = app.InitConfigAndLog()
 	if err != nil {
 		return err
 	}
-	return app.BootModules()
+	return app.ExecModules(block)
 }
 
 func (app *App) InitConfigAndLog() (err error) {
@@ -73,7 +73,7 @@ func (app *App) InitConfigAndLog() (err error) {
 	return nil
 }
 
-func (app *App) BootModules() (err error) {
+func (app *App) ExecModules(block bool) (err error) {
 	wrappers := app.Modules()
 	for _, wrapper := range wrappers {
 		RegisterModule(wrapper.Module, wrapper.IsBoot)
@@ -91,9 +91,11 @@ func (app *App) BootModules() (err error) {
 
 	xlog.Info("Exec app successfully.")
 
-	exitCh := make(chan os.Signal)
-	signal.Notify(exitCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	<-exitCh
+	if block {
+		exitCh := make(chan os.Signal)
+		signal.Notify(exitCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+		<-exitCh
+	}
 
 	xlog.Info("App prepare exit.")
 
