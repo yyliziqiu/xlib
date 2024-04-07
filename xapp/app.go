@@ -12,6 +12,11 @@ import (
 	"github.com/yyliziqiu/xlib/xlog"
 )
 
+type ModuleWrapper struct {
+	Module Module
+	IsBoot bool
+}
+
 type App struct {
 	// app 名称
 	Name string
@@ -32,18 +37,18 @@ type App struct {
 	Config Config
 
 	// 应用模块
-	Modules func() []Module
+	Modules func() []ModuleWrapper
 }
 
 func (app *App) Exec() (err error) {
-	err = app.Init()
+	err = app.InitConfigAndLog()
 	if err != nil {
 		return err
 	}
-	return app.Boot()
+	return app.BootModules()
 }
 
-func (app *App) Init() (err error) {
+func (app *App) InitConfigAndLog() (err error) {
 	err = xconfig.Init(app.ConfigFile, app.Config)
 	if err != nil {
 		return fmt.Errorf("init config error [%v]", err)
@@ -68,10 +73,10 @@ func (app *App) Init() (err error) {
 	return nil
 }
 
-func (app *App) Boot() (err error) {
-	modules := app.Modules()
-	if len(modules) > 0 {
-		RegisterModule(modules...)
+func (app *App) BootModules() (err error) {
+	wrappers := app.Modules()
+	for _, wrapper := range wrappers {
+		RegisterModule(wrapper.Module, wrapper.IsBoot)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

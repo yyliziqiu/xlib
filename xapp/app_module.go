@@ -3,28 +3,25 @@ package xapp
 import (
 	"context"
 	"fmt"
-
-	"github.com/yyliziqiu/xlib/xlog"
 )
 
 type Module interface {
-	Name() string
 	Init() error
 	Boot(context.Context) error
-	Exit() error
 }
 
-var _modules []Module
+var (
+	_modules []Module
+	_isBoots []bool
+)
 
-func RegisterModule(modules ...Module) {
-	if len(modules) == 0 {
-		return
-	}
-	_modules = append(_modules, modules...)
+func RegisterModule(module Module, isBoot bool) {
+	_modules = append(_modules, module)
+	_isBoots = append(_isBoots, isBoot)
 }
 
-func ExecModules(ctx context.Context, modules ...Module) (err error) {
-	err = InitModules(modules...)
+func ExecModules(ctx context.Context) (err error) {
+	err = InitModules()
 	if err != nil {
 		return err
 	}
@@ -34,46 +31,28 @@ func ExecModules(ctx context.Context, modules ...Module) (err error) {
 		return err
 	}
 
-	go func() {
-		<-ctx.Done()
-		ExitModules()
-	}()
-
 	return nil
 }
 
-func InitModules(modules ...Module) error {
-	RegisterModule(modules...)
+func InitModules() error {
 	for _, module := range _modules {
 		err := module.Init()
 		if err != nil {
-			return fmt.Errorf("init module[%s] error [%v]", module.Name(), err)
+			return fmt.Errorf("init module error [%v]", err)
 		}
-		xlog.Infof("Init module succeed, module: %s", module.Name())
 	}
 	return nil
 }
 
-func BootModules(ctx context.Context, modules ...Module) error {
-	RegisterModule(modules...)
-	for _, module := range _modules {
-		err := module.Boot(ctx)
-		if err != nil {
-			return fmt.Errorf("boot module[%s] error [%v]", module.Name(), err)
-		}
-		xlog.Infof("Boot module succeed, module: %s", module.Name())
-	}
-	return nil
-}
-
-func ExitModules() {
-	for i := len(_modules); i > 0; i-- {
-		module := _modules[i-1]
-		err := module.Exit()
-		if err != nil {
-			xlog.Errorf("Exit module failed, name: %s, error: %v.", module.Name(), err)
+func BootModules(ctx context.Context) error {
+	for i, module := range _modules {
+		if !_isBoots[i] {
 			continue
 		}
-		xlog.Infof("Exit module succeed, module: %s", module.Name())
+		err := module.Boot(ctx)
+		if err != nil {
+			return fmt.Errorf("boot module error [%v]", err)
+		}
 	}
+	return nil
 }
