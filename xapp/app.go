@@ -40,15 +40,15 @@ type App struct {
 	Config Config
 }
 
-func (app *App) Exec(block bool) (err error) {
-	err = app.InitConfigAndLog()
+func (app *App) Exec() (err error) {
+	err = app.InitConfigAndLogger()
 	if err != nil {
 		return err
 	}
-	return app.ExecModules(block)
+	return app.ExecModules()
 }
 
-func (app *App) InitConfigAndLog() (err error) {
+func (app *App) InitConfigAndLogger() (err error) {
 	err = xconfig.Init(app.ConfigFile, app.Config)
 	if err != nil {
 		return fmt.Errorf("init config error [%v]", err)
@@ -73,7 +73,7 @@ func (app *App) InitConfigAndLog() (err error) {
 	return nil
 }
 
-func (app *App) ExecModules(block bool) (err error) {
+func (app *App) ExecModules() (err error) {
 	wrappers := app.Modules()
 	for _, wrapper := range wrappers {
 		RegisterModule(wrapper.Module, wrapper.IsBoot)
@@ -91,11 +91,9 @@ func (app *App) ExecModules(block bool) (err error) {
 
 	xlog.Info("Exec modules successfully.")
 
-	if block {
-		exitCh := make(chan os.Signal)
-		signal.Notify(exitCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-		<-exitCh
-	}
+	exitCh := make(chan os.Signal)
+	signal.Notify(exitCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	<-exitCh
 
 	xlog.Info("App prepare exit.")
 
@@ -111,7 +109,7 @@ func (app *App) ExecModules(block bool) (err error) {
 }
 
 func (app *App) Init() (err error) {
-	err = app.InitConfigAndLog()
+	err = app.InitConfigAndLogger()
 	if err != nil {
 		return err
 	}

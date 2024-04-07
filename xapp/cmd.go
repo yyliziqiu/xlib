@@ -43,7 +43,7 @@ func initRootCmd(app *App) {
 			if strings.TrimSpace(*logdir) != "" {
 				app.LogDir = *logdir
 			}
-			err := app.InitConfigAndLog()
+			err := app.InitConfigAndLogger()
 			if err != nil {
 				fmt.Printf("Init app failed, error: %v\n", err)
 				os.Exit(1)
