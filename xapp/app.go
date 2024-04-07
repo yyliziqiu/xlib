@@ -40,14 +40,6 @@ type App struct {
 	Config Config
 }
 
-func (app *App) Exec() (err error) {
-	err = app.InitConfigAndLogger()
-	if err != nil {
-		return err
-	}
-	return app.ExecModules()
-}
-
 func (app *App) InitConfigAndLogger() (err error) {
 	err = xconfig.Init(app.ConfigFile, app.Config)
 	if err != nil {
@@ -73,7 +65,70 @@ func (app *App) InitConfigAndLogger() (err error) {
 	return nil
 }
 
-func (app *App) ExecModules() (err error) {
+func (app *App) Init() (err error) {
+	err = app.InitConfigAndLogger()
+	if err != nil {
+		return err
+	}
+	return app.InitModules()
+}
+
+func (app *App) InitModules() (err error) {
+	wrappers := app.Modules()
+	for _, wrapper := range wrappers {
+		RegisterModule(wrapper.Module, false)
+	}
+
+	xlog.Info("Prepare init modules.")
+	err = InitModules()
+	if err != nil {
+		xlog.Errorf("Init modules failed, error: %v", err)
+		return err
+	}
+
+	xlog.Info("Init modules successfully.")
+
+	return nil
+}
+
+func (app *App) Exec() (err error, f context.CancelFunc) {
+	err = app.InitConfigAndLogger()
+	if err != nil {
+		return err, nil
+	}
+	return app.ExecModules()
+}
+
+func (app *App) ExecModules() (err error, f context.CancelFunc) {
+	wrappers := app.Modules()
+	for _, wrapper := range wrappers {
+		RegisterModule(wrapper.Module, wrapper.IsBoot)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	xlog.Info("Prepare exec modules.")
+	err = ExecModules(ctx)
+	if err != nil {
+		xlog.Errorf("Exec modules failed, error: %v", err)
+		cancel()
+		return err, nil
+	}
+
+	xlog.Info("Exec modules successfully.")
+
+	return nil, cancel
+}
+
+func (app *App) Exec2() (err error) {
+	err = app.InitConfigAndLogger()
+	if err != nil {
+		return err
+	}
+	return app.ExecModules2()
+}
+
+func (app *App) ExecModules2() (err error) {
 	wrappers := app.Modules()
 	for _, wrapper := range wrappers {
 		RegisterModule(wrapper.Module, wrapper.IsBoot)
@@ -104,32 +159,6 @@ func (app *App) ExecModules() (err error) {
 	}
 
 	xlog.Info("App exit.")
-
-	return nil
-}
-
-func (app *App) Init() (err error) {
-	err = app.InitConfigAndLogger()
-	if err != nil {
-		return err
-	}
-	return app.InitModules()
-}
-
-func (app *App) InitModules() (err error) {
-	wrappers := app.Modules()
-	for _, wrapper := range wrappers {
-		RegisterModule(wrapper.Module, false)
-	}
-
-	xlog.Info("Prepare init modules.")
-	err = InitModules()
-	if err != nil {
-		xlog.Errorf("Init modules failed, error: %v", err)
-		return err
-	}
-
-	xlog.Info("Init modules successfully.")
 
 	return nil
 }

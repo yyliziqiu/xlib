@@ -15,10 +15,6 @@ type BaseModule struct {
 	Config BaseConfig
 }
 
-func (m BaseModule) Name() string {
-	return "Base"
-}
-
 func (m BaseModule) Init() (err error) {
 	c := m.Config
 	if len(c.DB) > 0 {
@@ -57,13 +53,12 @@ func (m BaseModule) Init() (err error) {
 }
 
 func (m BaseModule) Boot(ctx context.Context) error {
-	return nil
-}
-
-func (m BaseModule) Exit() error {
-	xdb.Finally()
-	xredis.Finally()
-	xkafka.Finally()
-	xelastic.Finally()
+	go func() {
+		<-ctx.Done()
+		xdb.Finally()
+		xredis.Finally()
+		xkafka.Finally()
+		xelastic.Finally()
+	}()
 	return nil
 }
