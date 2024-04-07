@@ -33,11 +33,11 @@ type App struct {
 	// 应用关闭等待毫秒数
 	WaitMS time.Duration
 
-	// 全局配置
-	Config Config
-
 	// 应用模块
 	Modules func() []ModuleWrapper
+
+	// 全局配置
+	Config Config
 }
 
 func (app *App) Exec(block bool) (err error) {
@@ -89,7 +89,7 @@ func (app *App) ExecModules(block bool) (err error) {
 		return err
 	}
 
-	xlog.Info("Exec app successfully.")
+	xlog.Info("Exec modules successfully.")
 
 	if block {
 		exitCh := make(chan os.Signal)
@@ -106,6 +106,32 @@ func (app *App) ExecModules(block bool) (err error) {
 	}
 
 	xlog.Info("App exit.")
+
+	return nil
+}
+
+func (app *App) Init() (err error) {
+	err = app.InitConfigAndLog()
+	if err != nil {
+		return err
+	}
+	return app.InitModules()
+}
+
+func (app *App) InitModules() (err error) {
+	wrappers := app.Modules()
+	for _, wrapper := range wrappers {
+		RegisterModule(wrapper.Module, false)
+	}
+
+	xlog.Info("Prepare init modules.")
+	err = InitModules()
+	if err != nil {
+		xlog.Errorf("Init modules failed, error: %v", err)
+		return err
+	}
+
+	xlog.Info("Init modules successfully.")
 
 	return nil
 }
