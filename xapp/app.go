@@ -91,26 +91,26 @@ func (app *App) InitModules() (err error) {
 
 func (app *App) registerModules() {
 	for _, wrapper := range app.Modules {
-		RegisterModule(wrapper.Module, false)
+		RegisterModule(wrapper.Module, wrapper.IsBoot)
 	}
 	if app.ModulesFunc == nil {
 		return
 	}
 	wrappers := app.ModulesFunc()
 	for _, wrapper := range wrappers {
-		RegisterModule(wrapper.Module, false)
+		RegisterModule(wrapper.Module, wrapper.IsBoot)
 	}
 }
 
-func (app *App) Exec() (err error, f context.CancelFunc) {
+func (app *App) Start() (err error, f context.CancelFunc) {
 	err = app.InitConfigAndLogger()
 	if err != nil {
 		return err, nil
 	}
-	return app.ExecModules()
+	return app.StartModules()
 }
 
-func (app *App) ExecModules() (err error, f context.CancelFunc) {
+func (app *App) StartModules() (err error, f context.CancelFunc) {
 	app.registerModules()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -128,28 +128,21 @@ func (app *App) ExecModules() (err error, f context.CancelFunc) {
 	return nil, cancel
 }
 
-func (app *App) Exec2() (err error) {
+func (app *App) Run() (err error) {
 	err = app.InitConfigAndLogger()
 	if err != nil {
 		return err
 	}
-	return app.ExecModules2()
+	return app.RunModules()
 }
 
-func (app *App) ExecModules2() (err error) {
-	app.registerModules()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	xlog.Info("Prepare exec modules.")
-	err = ExecModules(ctx)
+func (app *App) RunModules() (err error) {
+	err, cancel := app.StartModules()
 	if err != nil {
-		xlog.Errorf("Exec modules failed, error: %v", err)
 		return err
 	}
 
-	xlog.Info("Exec modules successfully.")
+	xlog.Info("App run successfully.")
 
 	exitCh := make(chan os.Signal)
 	signal.Notify(exitCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
