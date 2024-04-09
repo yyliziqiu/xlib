@@ -10,11 +10,11 @@ import (
 
 var _rootCmd *cobra.Command
 
-func ExecCmd(app *App, cmds ...func() *cobra.Command) {
+func ExecCmd(app *App, cmds ...func(app *App) *cobra.Command) {
 	initRootCmd(app)
 
 	for _, cmd := range cmds {
-		_rootCmd.AddCommand(cmd())
+		_rootCmd.AddCommand(cmd(app))
 	}
 
 	err := _rootCmd.Execute()
