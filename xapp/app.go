@@ -34,10 +34,19 @@ type App struct {
 	WaitMS time.Duration
 
 	// 应用模块
-	Modules func() []ModuleWrapper
+	Modules     []ModuleWrapper
+	ModulesFunc func() []ModuleWrapper
 
 	// 全局配置
 	Config Config
+}
+
+func (app *App) Init() (err error) {
+	err = app.InitConfigAndLogger()
+	if err != nil {
+		return err
+	}
+	return app.InitModules()
 }
 
 func (app *App) InitConfigAndLogger() (err error) {
@@ -65,19 +74,8 @@ func (app *App) InitConfigAndLogger() (err error) {
 	return nil
 }
 
-func (app *App) Init() (err error) {
-	err = app.InitConfigAndLogger()
-	if err != nil {
-		return err
-	}
-	return app.InitModules()
-}
-
 func (app *App) InitModules() (err error) {
-	wrappers := app.Modules()
-	for _, wrapper := range wrappers {
-		RegisterModule(wrapper.Module, false)
-	}
+	app.registerModules()
 
 	xlog.Info("Prepare init modules.")
 	err = InitModules()
@@ -91,6 +89,19 @@ func (app *App) InitModules() (err error) {
 	return nil
 }
 
+func (app *App) registerModules() {
+	for _, wrapper := range app.Modules {
+		RegisterModule(wrapper.Module, false)
+	}
+	if app.ModulesFunc == nil {
+		return
+	}
+	wrappers := app.ModulesFunc()
+	for _, wrapper := range wrappers {
+		RegisterModule(wrapper.Module, false)
+	}
+}
+
 func (app *App) Exec() (err error, f context.CancelFunc) {
 	err = app.InitConfigAndLogger()
 	if err != nil {
@@ -100,10 +111,7 @@ func (app *App) Exec() (err error, f context.CancelFunc) {
 }
 
 func (app *App) ExecModules() (err error, f context.CancelFunc) {
-	wrappers := app.Modules()
-	for _, wrapper := range wrappers {
-		RegisterModule(wrapper.Module, wrapper.IsBoot)
-	}
+	app.registerModules()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -129,10 +137,7 @@ func (app *App) Exec2() (err error) {
 }
 
 func (app *App) ExecModules2() (err error) {
-	wrappers := app.Modules()
-	for _, wrapper := range wrappers {
-		RegisterModule(wrapper.Module, wrapper.IsBoot)
-	}
+	app.registerModules()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

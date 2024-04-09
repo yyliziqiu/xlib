@@ -34,7 +34,7 @@ func initRootCmd(app *App) {
 		Version: app.Version,
 		Use:     app.Name,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Use %s.exe -h or --help for help.\n", app.Name)
+			fmt.Printf("Use %s.bin -h or --help for help.\n", app.Name)
 		},
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if strings.TrimSpace(*config) != "" {
