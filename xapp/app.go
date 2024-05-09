@@ -12,11 +12,6 @@ import (
 	"github.com/yyliziqiu/xlib/xlog"
 )
 
-type ModuleWrapper struct {
-	Module Module
-	IsBoot bool
-}
-
 type App struct {
 	// app 名称
 	Name string
@@ -25,48 +20,60 @@ type App struct {
 	Version string
 
 	// 配置文件路径
-	ConfigFile string
+	ConfigPath string
 
-	// 日志目录路径。如果不为空，将覆盖配置文件中的日志路径
-	LogDir string
-
-	// 应用关闭等待毫秒数
-	WaitMS time.Duration
-
-	// 应用模块
-	Modules     []ModuleWrapper
-	ModulesFunc func() []ModuleWrapper
+	// 日志目录路径
+	LogPath string
 
 	// 全局配置
-	Config Config
+	Config any
+
+	// 模块
+	Modules     func() []Module
+	ModuleWraps func() []ModuleWrap
 }
 
+// Init app
 func (app *App) Init() (err error) {
-	err = app.InitConfigAndLogger()
+	err = app.InitConfig()
 	if err != nil {
 		return err
 	}
 	return app.InitModules()
 }
 
-func (app *App) InitConfigAndLogger() (err error) {
-	err = xconfig.Init(app.ConfigFile, app.Config)
+func (app *App) InitConfig() (err error) {
+	// 加载配置文件
+	err = xconfig.Init(app.ConfigPath, app.Config)
 	if err != nil {
 		return fmt.Errorf("init config error [%v]", err)
 	}
 
-	err = app.Config.Check()
-	if err != nil {
-		return err
+	// 检查配置是否正确
+	icheck, ok := app.Config.(ICheck)
+	if ok {
+		err = icheck.Check()
+		if err != nil {
+			return err
+		}
 	}
 
-	app.Config.Default()
-
-	logC := app.Config.GetLog()
-	if app.LogDir != "" {
-		logC.Path = app.LogDir
+	// 为配置项设置默认值
+	idefault, ok := app.Config.(IDefault)
+	if ok {
+		idefault.Default()
 	}
-	err = xlog.Init(logC)
+
+	// 初始化日志
+	logc := xlog.Config{}
+	logv, ok := GetFieldValue(app.Config, "Log")
+	if ok {
+		logc = logv.(xlog.Config)
+	}
+	if app.LogPath != "" {
+		logc.Path = app.LogPath
+	}
+	err = xlog.Init(logc)
 	if err != nil {
 		return fmt.Errorf("init log error [%v]", err)
 	}
@@ -90,27 +97,24 @@ func (app *App) InitModules() (err error) {
 }
 
 func (app *App) registerModules() {
-	for _, wrapper := range app.Modules {
-		RegisterModule(wrapper.Module, wrapper.IsBoot)
+	for _, module := range app.Modules() {
+		RegisterModule(module)
 	}
-	if app.ModulesFunc == nil {
-		return
-	}
-	wrappers := app.ModulesFunc()
-	for _, wrapper := range wrappers {
-		RegisterModule(wrapper.Module, wrapper.IsBoot)
+	for _, wrap := range app.ModuleWraps() {
+		RegisterModuleWrap(wrap)
 	}
 }
 
+// Start app
 func (app *App) Start() (err error, f context.CancelFunc) {
-	err = app.InitConfigAndLogger()
+	err = app.InitConfig()
 	if err != nil {
 		return err, nil
 	}
-	return app.StartModules()
+	return app.ExecModules()
 }
 
-func (app *App) StartModules() (err error, f context.CancelFunc) {
+func (app *App) ExecModules() (err error, f context.CancelFunc) {
 	app.registerModules()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -128,16 +132,17 @@ func (app *App) StartModules() (err error, f context.CancelFunc) {
 	return nil, cancel
 }
 
+// Run app
 func (app *App) Run() (err error) {
-	err = app.InitConfigAndLogger()
+	err = app.InitConfig()
 	if err != nil {
 		return err
 	}
-	return app.RunModules()
+	return app.ExecModulesBlocked()
 }
 
-func (app *App) RunModules() (err error) {
-	err, cancel := app.StartModules()
+func (app *App) ExecModulesBlocked() (err error) {
+	err, cancel := app.ExecModules()
 	if err != nil {
 		return err
 	}
@@ -152,8 +157,9 @@ func (app *App) RunModules() (err error) {
 
 	cancel()
 
-	if app.WaitMS > 0 {
-		time.Sleep(app.WaitMS * time.Millisecond)
+	waittimev, ok := GetFieldValue(app.Config, "WaitTime")
+	if ok {
+		time.Sleep(waittimev.(time.Duration))
 	}
 
 	xlog.Info("App exit.")

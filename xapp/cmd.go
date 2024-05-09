@@ -38,12 +38,12 @@ func initRootCmd(app *App) {
 		},
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if strings.TrimSpace(*config) != "" {
-				app.ConfigFile = *config
+				app.ConfigPath = *config
 			}
 			if strings.TrimSpace(*logdir) != "" {
-				app.LogDir = *logdir
+				app.LogPath = *logdir
 			}
-			err := app.InitConfigAndLogger()
+			err := app.InitConfig()
 			if err != nil {
 				fmt.Printf("Init app failed, error: %v\n", err)
 				os.Exit(1)

@@ -10,14 +10,26 @@ type Module interface {
 	Boot(context.Context) error
 }
 
+type ModuleWrap struct {
+	Module Module
+	IsBoot bool
+}
+
 var (
 	_modules []Module
 	_isBoots []bool
 )
 
-func RegisterModule(module Module, isBoot bool) {
-	_modules = append(_modules, module)
-	_isBoots = append(_isBoots, isBoot)
+func RegisterModule(module Module) {
+	RegisterModuleWrap(ModuleWrap{
+		Module: module,
+		IsBoot: true,
+	})
+}
+
+func RegisterModuleWrap(wrap ModuleWrap) {
+	_modules = append(_modules, wrap.Module)
+	_isBoots = append(_isBoots, wrap.IsBoot)
 }
 
 func ExecModules(ctx context.Context) (err error) {
