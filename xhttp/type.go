@@ -74,7 +74,7 @@ func AppendQuery(rawURL string, query url.Values) (string, error) {
 	return uo.String(), nil
 }
 
-func HeaderToString(header http.Header) string {
+func SerializeHeader(header http.Header) string {
 	if len(header) == 0 {
 		return "{}"
 	}

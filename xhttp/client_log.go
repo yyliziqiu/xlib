@@ -42,11 +42,11 @@ func (cli *Client) logWarn(format string, args ...interface{}) {
 	cli.logger.Warn(message)
 }
 
-func (cli *Client) logResponse(url2 *url.URL, reqHeader http.Header, reqBody []byte, resBody []byte, err error, cost string) {
+func (cli *Client) logHTTP(url2 *url.URL, reqHeader http.Header, reqBody []byte, resBody []byte, err error, cost string) {
 	if cli.logger == nil {
 		return
 	}
-	hs, b1, b2 := HeaderToString(reqHeader), "-", "-"
+	hs, b1, b2 := SerializeHeader(reqHeader), "-", "-"
 	if len(reqBody) > 0 {
 		b1 = string(reqBody)
 	}
