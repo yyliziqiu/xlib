@@ -15,6 +15,10 @@ type BaseModule struct {
 	Config any
 }
 
+func NewBaseModule(config any) BaseModule {
+	return BaseModule{Config: config}
+}
+
 func (m BaseModule) Init() (err error) {
 	dbi, ok := GetFieldValue(m.Config, "DB")
 	if ok {
