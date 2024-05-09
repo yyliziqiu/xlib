@@ -15,16 +15,17 @@ type ModuleWrap struct {
 	IsBoot bool
 }
 
+func NewModuleWrap(module Module, isBoot bool) ModuleWrap {
+	return ModuleWrap{Module: module, IsBoot: isBoot}
+}
+
 var (
 	_modules []Module
 	_isBoots []bool
 )
 
 func RegisterModule(module Module) {
-	RegisterModuleWrap(ModuleWrap{
-		Module: module,
-		IsBoot: true,
-	})
+	RegisterModuleWrap(NewModuleWrap(module, true))
 }
 
 func RegisterModuleWrap(wrap ModuleWrap) {

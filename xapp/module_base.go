@@ -16,39 +16,51 @@ type BaseModule struct {
 }
 
 func (m BaseModule) Init() (err error) {
-	dbc, ok := GetFieldValue(m.Config, "DB")
+	dbi, ok := GetFieldValue(m.Config, "DB")
 	if ok {
-		xlog.Info("Init DB.")
-		err = xdb.Init(dbc.([]xdb.Config)...)
-		if err != nil {
-			return fmt.Errorf("init DB error [%v]", err)
+		dbc, ok2 := dbi.([]xdb.Config)
+		if ok2 && len(dbc) > 0 {
+			xlog.Info("Init DB.")
+			err = xdb.Init(dbc...)
+			if err != nil {
+				return fmt.Errorf("init DB error [%v]", err)
+			}
 		}
 	}
 
-	redisc, ok := GetFieldValue(m.Config, "Redis")
+	redisi, ok := GetFieldValue(m.Config, "Redis")
 	if ok {
-		xlog.Info("Init redis.")
-		err = xredis.Init(redisc.([]xredis.Config)...)
-		if err != nil {
-			return fmt.Errorf("init redis error [%v]", err)
+		redisc, ok2 := redisi.([]xredis.Config)
+		if ok2 && len(redisc) > 0 {
+			xlog.Info("Init redis.")
+			err = xredis.Init(redisc...)
+			if err != nil {
+				return fmt.Errorf("init redis error [%v]", err)
+			}
 		}
 	}
 
-	kafkac, ok := GetFieldValue(m.Config, "Kafka")
+	kafkai, ok := GetFieldValue(m.Config, "Kafka")
 	if ok {
-		xlog.Info("Init kafka.")
-		err = xkafka.Init(kafkac.([]xkafka.Config)...)
-		if err != nil {
-			return fmt.Errorf("init kafka error [%v]", err)
+		kafkac, ok2 := kafkai.([]xkafka.Config)
+		if ok2 && len(kafkac) > 0 {
+			xlog.Info("Init kafka.")
+			err = xkafka.Init(kafkac...)
+			if err != nil {
+				return fmt.Errorf("init kafka error [%v]", err)
+			}
 		}
 	}
 
-	elasticc, ok := GetFieldValue(m.Config, "Elastic")
+	elastici, ok := GetFieldValue(m.Config, "Elastic")
 	if ok {
-		xlog.Info("Init elastic.")
-		err = xelastic.Init(elasticc.([]xelastic.Config)...)
-		if err != nil {
-			return fmt.Errorf("init elastic error [%v]", err)
+		elasticc, ok2 := elastici.([]xelastic.Config)
+		if ok2 && len(elasticc) > 0 {
+			xlog.Info("Init elastic.")
+			err = xelastic.Init(elasticc...)
+			if err != nil {
+				return fmt.Errorf("init elastic error [%v]", err)
+			}
 		}
 	}
 
