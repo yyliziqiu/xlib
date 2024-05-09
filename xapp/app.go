@@ -97,11 +97,15 @@ func (app *App) InitModules() (err error) {
 }
 
 func (app *App) registerModules() {
-	for _, module := range app.Modules() {
-		RegisterModule(module)
+	if app.Modules != nil {
+		for _, module := range app.Modules() {
+			RegisterModule(module)
+		}
 	}
-	for _, wrap := range app.ModuleWraps() {
-		RegisterModuleWrap(wrap)
+	if app.ModuleWraps != nil {
+		for _, wrap := range app.ModuleWraps() {
+			RegisterModuleWrap(wrap)
+		}
 	}
 }
 
