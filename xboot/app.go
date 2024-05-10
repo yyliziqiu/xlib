@@ -29,8 +29,10 @@ type App struct {
 	Config any
 
 	// 模块
-	InitFuncs InitFuncs
-	BootFuncs BootFuncs
+	InitFuncs   InitFuncs
+	BootFuncs   BootFuncs
+	InitFuncsCb func() InitFuncs
+	BootFuncsCb func() BootFuncs
 
 	hasCallInitFuncs bool
 }
@@ -89,8 +91,13 @@ func (app *App) CallInitFuncs() (err error) {
 	}
 	app.hasCallInitFuncs = true
 
+	initFuncs := app.InitFuncs
+	if app.InitFuncsCb != nil {
+		initFuncs = app.InitFuncsCb()
+	}
+
 	xlog.Info("Prepare init funcs.")
-	err = app.InitFuncs.Init()
+	err = initFuncs.Init()
 	if err != nil {
 		xlog.Errorf("Init funcs failed, error: %v", err)
 		return err
@@ -117,8 +124,13 @@ func (app *App) CallBootFuncs() (error, context.CancelFunc) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	bootFuncs := app.BootFuncs
+	if app.BootFuncsCb != nil {
+		bootFuncs = app.BootFuncsCb()
+	}
+
 	xlog.Info("Prepare boot funcs.")
-	err = app.BootFuncs.Boot(ctx)
+	err = bootFuncs.Boot(ctx)
 	if err != nil {
 		xlog.Errorf("Boot funcs failed, error: %v", err)
 		cancel()
