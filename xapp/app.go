@@ -66,9 +66,9 @@ func (app *App) InitConfig() (err error) {
 
 	// 初始化日志
 	logc := xlog.Config{}
-	logv, ok := GetFieldValue(app.Config, "Log")
+	ilog, ok := app.Config.(IGetLog)
 	if ok {
-		logc = logv.(xlog.Config)
+		logc = ilog.GetLog()
 	}
 	if app.LogPath != "" {
 		logc.Path = app.LogPath

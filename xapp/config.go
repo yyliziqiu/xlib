@@ -24,6 +24,11 @@ type IDefault interface {
 	Default()
 }
 
+// IGetLog 为配置项设置默认值
+type IGetLog interface {
+	GetLog() xlog.Config
+}
+
 type Config struct {
 	Env      string
 	AppId    string
@@ -71,4 +76,8 @@ func (c *Config) Default() {
 	if c.DataPath == "" {
 		c.DataPath = filepath.Join(c.BasePath, "data")
 	}
+}
+
+func (c *Config) GetLog() xlog.Config {
+	return c.Log
 }
